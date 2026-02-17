@@ -27,7 +27,7 @@
 
 - id
 - first_name
-- middle_name
+- middle_name (отчество)
 - last_name
 - email
 - password_hash
@@ -85,7 +85,7 @@
   "last_name": "some-last-name",
   "email": "admin@example.com",
   "password": "some-password",
-  "password2": "some-password"
+  "confirm_password": "some-password"
 }
 ```
 
@@ -165,7 +165,7 @@
 
 **Заголовки**:
 
-- Authorization: Bearer <token>
+- Authorization: Bearer `<token>`
 
 **Response**:
 
