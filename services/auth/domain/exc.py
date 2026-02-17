@@ -1,8 +1,11 @@
-class AuthDomainError(Exception):
+from ..core.exc import AuthError
+
+
+class DomainError(AuthError):
     pass
 
 
-class AuthDomainValidationError(AuthDomainError):
+class DomainValidationError(DomainError):
 
     def __init__(self, errors: dict[str, list[str]]) -> None:
         self.errors = errors

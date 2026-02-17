@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from .email import EmailAddress
 from ..utils import VALID_NAME_SYMBOLS, is_empty_string
-from ..exc import AuthDomainValidationError
+from ..exc import DomainValidationError
 
 
 @dataclass(frozen=True)
@@ -42,7 +42,7 @@ class RegisterForm:
             errors.setdefault("confirm_password", []).append(msg)
 
         if errors:
-            raise AuthDomainValidationError(errors)
+            raise DomainValidationError(errors)
 
     def validate_first_name(self) -> list[str]:
         return self.__validate_name(self.first_name)

@@ -1,2 +1,4 @@
-class UseCaseError(Exception):
+from ..core.exc import AuthError
+
+class UseCaseError(AuthError):
     pass

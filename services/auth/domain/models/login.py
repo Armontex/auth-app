@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from .email import EmailAddress
-from ..exc import AuthDomainValidationError
+from ..exc import DomainValidationError
 from ..utils import is_empty_string
 
 
@@ -17,7 +17,7 @@ class LoginForm:
             errors.setdefault("password", []).append(msg)
 
         if errors:
-            raise AuthDomainValidationError(errors)
+            raise DomainValidationError(errors)
 
     def validate_password(self) -> list[str]:
         messages = []
