@@ -2,13 +2,11 @@ from dataclasses import dataclass
 from .email import EmailAddress
 from ..utils import VALID_NAME_SYMBOLS, is_empty_string
 from ..exc import DomainValidationError
+from ..const import NAME_MAX_LENGTH, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH
 
 
 @dataclass(frozen=True)
 class RegisterForm:
-    MIN_LENGTH_PASSWORD = 8
-    MAX_LENGTH_PASSWORD = 128
-    MAX_LENGTH_NAME = 100
 
     first_name: str
     last_name: str
@@ -54,15 +52,15 @@ class RegisterForm:
         if self.middle_name is not None:
             return self.__validate_name(self.middle_name)
 
-    @classmethod
-    def __validate_name(cls, value: str) -> list[str]:
+    @staticmethod
+    def __validate_name(value: str) -> list[str]:
         messages = []
 
         if is_empty_string(value):
             messages.append("cannot be empty")
 
-        if len(value) > cls.MAX_LENGTH_NAME:
-            messages.append(f"too long (max {cls.MAX_LENGTH_NAME})")
+        if len(value) > NAME_MAX_LENGTH:
+            messages.append(f"too long (max {NAME_MAX_LENGTH})")
 
         messages.extend(
             f"Invalid character '{char}'"
@@ -75,16 +73,16 @@ class RegisterForm:
     def validate_password(self) -> list[str]:
         messages = []
 
-        if len(self.password) < self.MIN_LENGTH_PASSWORD:
-            messages.append(f"too short (min {self.MIN_LENGTH_PASSWORD})")
+        if len(self.password) < PASSWORD_MIN_LENGTH:
+            messages.append(f"too short (min {PASSWORD_MIN_LENGTH})")
         else:
             if self.password[:1].isspace():
                 messages.append("cannot start with a space")
             if self.password[-1:].isspace():
                 messages.append("cannot end with a space")
 
-        if len(self.password) > self.MAX_LENGTH_PASSWORD:
-            messages.append(f"too long (max {self.MAX_LENGTH_PASSWORD})")
+        if len(self.password) > PASSWORD_MAX_LENGTH:
+            messages.append(f"too long (max {PASSWORD_MAX_LENGTH})")
 
         return messages
 
