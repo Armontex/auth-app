@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import String, DateTime, func, text, Boolean
+from sqlalchemy import String, DateTime, func, text, Boolean, Index
 from sqlalchemy.orm import Mapped, mapped_column
 from common.base.db import Base
 from services.auth.domain.const import NAME_MAX_LENGTH
@@ -8,8 +8,17 @@ from services.auth.domain.const import NAME_MAX_LENGTH
 class User(Base):
     __tablename__ = "users"
 
+    __table_args__ = [
+        Index(
+            "unique_users_email_active",
+            "email",
+            unique=True,
+            postgresql_where=text("is_active"),
+        )  # Только один активный пользователь на email. Неактивных - хоть сколько
+    ]
+
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    email: Mapped[str] = mapped_column(unique=True, nullable=False, index=True)
+    email: Mapped[str] = mapped_column(nullable=False, index=True)
     first_name: Mapped[str] = mapped_column(String(NAME_MAX_LENGTH), nullable=False)
     middle_name: Mapped[str | None] = mapped_column(
         String(NAME_MAX_LENGTH),
