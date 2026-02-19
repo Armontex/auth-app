@@ -12,14 +12,14 @@ class LoginForm:
     def __post_init__(self):
         errors: dict[str, list[str]] = {}
 
-        password_errors = self.validate_password()
+        password_errors = self._validate_password()
         for msg in password_errors:
             errors.setdefault("password", []).append(msg)
 
         if errors:
             raise DomainValidationError(errors)
 
-    def validate_password(self) -> list[str]:
+    def _validate_password(self) -> list[str]:
         messages = []
 
         if is_empty_string(self.password):

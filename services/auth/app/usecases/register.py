@@ -1,7 +1,7 @@
 from common.exc import RepositoryError
 from ..ports import IUsersRepository, IUser, IPasswordHasher
 from ..exc import UseCaseError
-from ...domain.models.register import RegisterForm
+from ...domain.models import RegisterForm
 
 
 class RegisterError(UseCaseError): ...

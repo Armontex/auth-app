@@ -9,7 +9,9 @@ class EmailAddress:
 
     def __post_init__(self):
         try:
-            res = validate_email(self.value, check_deliverability=False)
+            value = self.value.strip().lower()
+            res = validate_email(value, check_deliverability=False)
         except EmailNotValidError as e:
             raise DomainValidationError({"email": ["invalid email address"]}) from e
+        
         object.__setattr__(self, "value", res.normalized)

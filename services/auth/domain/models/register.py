@@ -18,37 +18,37 @@ class RegisterForm:
     def __post_init__(self):
         errors: dict[str, list[str]] = {}
 
-        first_name_errors = self.validate_first_name()
+        first_name_errors = self._validate_first_name()
         for msg in first_name_errors:
             errors.setdefault("first_name", []).append(msg)
 
-        last_name_errors = self.validate_last_name()
+        last_name_errors = self._validate_last_name()
         for msg in last_name_errors:
             errors.setdefault("last_name", []).append(msg)
 
-        middle_name_errors = self.validate_middle_name()
+        middle_name_errors = self._validate_middle_name()
         if middle_name_errors is not None:
             for msg in middle_name_errors:
                 errors.setdefault("middle_name", []).append(msg)
 
-        password_errors = self.validate_password()
+        password_errors = self._validate_password()
         for msg in password_errors:
             errors.setdefault("password", []).append(msg)
 
-        confirm_password_errors = self.validate_confirm_password()
+        confirm_password_errors = self._validate_confirm_password()
         for msg in confirm_password_errors:
             errors.setdefault("confirm_password", []).append(msg)
 
         if errors:
             raise DomainValidationError(errors)
 
-    def validate_first_name(self) -> list[str]:
+    def _validate_first_name(self) -> list[str]:
         return self.__validate_name(self.first_name)
 
-    def validate_last_name(self) -> list[str]:
+    def _validate_last_name(self) -> list[str]:
         return self.__validate_name(self.last_name)
 
-    def validate_middle_name(self) -> list[str] | None:
+    def _validate_middle_name(self) -> list[str] | None:
         if self.middle_name is not None:
             return self.__validate_name(self.middle_name)
 
@@ -70,7 +70,7 @@ class RegisterForm:
 
         return messages
 
-    def validate_password(self) -> list[str]:
+    def _validate_password(self) -> list[str]:
         messages = []
 
         if len(self.password) < PASSWORD_MIN_LENGTH:
@@ -86,7 +86,7 @@ class RegisterForm:
 
         return messages
 
-    def validate_confirm_password(self) -> list[str]:
+    def _validate_confirm_password(self) -> list[str]:
         messages = []
 
         if is_empty_string(self.confirm_password):
