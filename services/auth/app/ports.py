@@ -1,14 +1,21 @@
 from typing import Protocol
+from datetime import datetime
 
 
 class IUser(Protocol):
     id: int
     email: str
+    first_name: str
+    middle_name: str | None
+    last_name: str
+    password_hash: str
+    is_active: bool
+    created_at: datetime
 
 
 class IUserRepository(Protocol):
 
-    # async def get_user_by_email(self, email: str) -> IUser | None: ...
+    async def get_user_by_email(self, email: str) -> IUser | None: ...
 
     async def add_user(
         self,
@@ -19,9 +26,18 @@ class IUserRepository(Protocol):
         password_hash: str,
     ) -> IUser: ...
 
+    async def delete_user(self, user_id: int) -> None: ...
+
 
 class IPasswordHasher(Protocol):
 
     def hash(self, password: str) -> str: ...
 
     def verify(self, password: str, password_hash: str) -> bool: ...
+
+
+class IJWTManager(Protocol):
+
+    def issue_access(self, user_id: int) -> str: ...
+    async def verify(self, token: str) -> int: ...
+    async def revoke(self, token: str) -> None: ...

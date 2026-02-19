@@ -1,9 +1,4 @@
-from ..common.exc import AuthError
-
-
-class DomainError(AuthError):
-    pass
-
+from ..common.exc import DomainError
 
 class DomainValidationError(DomainError):
 

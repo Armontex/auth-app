@@ -1,10 +1,10 @@
 from common.exc import RepositoryError
 from ..ports import IUserRepository, IUser, IPasswordHasher
-from ..exc import UseCaseError
+from .exc import AppError
 from ...domain.models import RegisterForm
 
 
-class RegisterError(UseCaseError): ...
+class RegisterError(AppError): ...
 
 
 class RegisterUseCase:

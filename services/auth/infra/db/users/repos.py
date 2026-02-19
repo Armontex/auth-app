@@ -9,27 +9,27 @@ from .models import User
 
 class UserRepository(BaseRepository, IUserRepository):
 
-    # @override
-    # async def get_user_by_email(
-    #     self, email: str, is_active: bool = True
-    # ) -> User | None:
-    #     """Данная функция выдаёт первого user-а (активного по-умолчанию) с равным `email` или,
-    #     если пользователь с такой почтой не существует, то `None`
+    @override
+    async def get_user_by_email(
+        self, email: str, is_active: bool = True
+    ) -> User | None:
+        """Данная функция выдаёт первого user-а (только активного по-умолчанию) с равным `email` или,
+        если пользователь с такой почтой не существует, то `None`
 
-    #     Args:
-    #         email (str): Почта
-    #         is_active (bool, optional): Активный ли пользователь. По-умолчанию: True.
+        Args:
+            email (str): Почта
+            is_active (bool, optional): Активный ли пользователь. По-умолчанию: True.
 
-    #     Returns:
-    #         User | None: `User` - если такой пользователь найден, иначе `None`
-    #     """
-    #     stmt = (
-    #         select(User)
-    #         .where((User.email == email) and (User.is_active == is_active))
-    #         .limit(1)
-    #     )
-    #     result = await self._session.execute(stmt)
-    #     return result.scalars().first()
+        Returns:
+            User | None: `User` - если такой пользователь найден, иначе `None`
+        """
+        stmt = (
+            select(User)
+            .where((User.email == email) and (User.is_active == is_active))
+            .limit(1)
+        )
+        result = await self._session.execute(stmt)
+        return result.scalars().first()
 
     @override
     async def add_user(
