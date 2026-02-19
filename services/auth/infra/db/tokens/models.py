@@ -1,9 +1,8 @@
 from redis_om import HashModel
-from typing import Literal
 from services.auth.common.types import UUID
 
 
-class RevokedToken(HashModel):
+class RevokedToken(HashModel, index=True):
     jti: UUID
 
     class Meta:

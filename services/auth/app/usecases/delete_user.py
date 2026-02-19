@@ -1,4 +1,4 @@
-from ..ports import IJWTManager, IUserRepository
+from ..ports import IJWTManager, IUserUoW
 from .exc import AppError
 from common.exc import RepositoryError
 from services.auth.common.exc import InfraError
@@ -11,17 +11,20 @@ class DeleteUserErrorUseCase:
 
     def __init__(
         self,
-        user_repo: IUserRepository,
+        uow: IUserUoW,
         jwt_manager: IJWTManager,
     ) -> None:
-        self._user_repo = user_repo
+        self._uow = uow
         self._jwt = jwt_manager
 
     async def execute(self, token: str) -> None:
         try:
             user_id = await self._jwt.verify(token)
             await self._jwt.revoke(token)
-            await self._user_repo.delete_user(user_id)
+            
+            async with self._uow as repo:
+                await repo.delete_user(user_id)
+                
         except InfraError as e:
             raise DeleteUserError("Invalid or expired token") from e
         except RepositoryError as e:

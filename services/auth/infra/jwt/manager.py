@@ -14,7 +14,7 @@ class TokenPayload:
     exp: float
 
 
-# ISSUE: Добавить refresh_token. Возможность отзывать токен.
+# ISSUE: Добавить refresh_token.
 class JWTManager:
     ALGORITHM = "HS256"
     ACCESS_EXPIRES_MINUTES = 60 * 24  # 1 день

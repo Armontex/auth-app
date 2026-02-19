@@ -1,5 +1,5 @@
 from typing import override
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from common.base.db import BaseRepository
 from common.exc import RepositoryError
@@ -25,7 +25,7 @@ class UserRepository(BaseRepository, IUserRepository):
         """
         stmt = (
             select(User)
-            .where((User.email == email) and (User.is_active == is_active))
+            .where((User.email == email) & (User.is_active == is_active))
             .limit(1)
         )
         result = await self._session.execute(stmt)
@@ -63,11 +63,19 @@ class UserRepository(BaseRepository, IUserRepository):
             password_hash=password_hash,
         )
         try:
-            async with self._session.begin():
-                self._session.add(new_user)
-                await self._session.flush()
+            self._session.add(new_user)
+            await self._session.flush()
         except IntegrityError as e:
             raise RepositoryError("email already exists") from e
 
         await self._session.refresh(new_user)
         return new_user
+
+    @override
+    async def delete_user(self, user_id: int) -> None:
+        smtp = (
+            update(User)
+            .where((User.id == user_id) & (User.is_active == True))
+            .values(is_active=False)
+        )
+        await self._session.execute(smtp)

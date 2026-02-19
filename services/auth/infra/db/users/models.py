@@ -8,14 +8,14 @@ from services.auth.domain.const import NAME_MAX_LENGTH
 class User(Base):
     __tablename__ = "users"
 
-    __table_args__ = [
+    __table_args__ = (
         Index(
             "unique_users_email_active",
             "email",
             unique=True,
             postgresql_where=text("is_active"),
-        )  # Только один активный пользователь на email. Неактивных - хоть сколько
-    ]
+        ),  # Только один активный пользователь на email. Неактивных - хоть сколько
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     email: Mapped[str] = mapped_column(nullable=False, index=True)
