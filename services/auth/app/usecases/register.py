@@ -1,5 +1,5 @@
 from common.exc import RepositoryError
-from ..ports import IUsersRepository, IUser, IPasswordHasher
+from ..ports import IUserRepository, IUser, IPasswordHasher
 from ..exc import UseCaseError
 from ...domain.models import RegisterForm
 
@@ -10,7 +10,7 @@ class RegisterError(UseCaseError): ...
 class RegisterUseCase:
 
     def __init__(
-        self, user_repo: IUsersRepository, password_hasher: IPasswordHasher
+        self, user_repo: IUserRepository, password_hasher: IPasswordHasher
     ) -> None:
         self._user_repo = user_repo
         self._hasher = password_hasher

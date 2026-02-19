@@ -6,9 +6,9 @@ class IUser(Protocol):
     email: str
 
 
-class IUsersRepository(Protocol):
+class IUserRepository(Protocol):
 
-    async def get_user_by_email(self, email: str) -> IUser | None: ...
+    # async def get_user_by_email(self, email: str) -> IUser | None: ...
 
     async def add_user(
         self,
