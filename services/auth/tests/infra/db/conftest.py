@@ -5,6 +5,9 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sess
 
 from common.base.db import Base
 
+import services.profile.infra.db.profiles.models
+import services.auth.infra.db.users.models
+
 
 @pytest.fixture(scope="session")
 def postgres_container():

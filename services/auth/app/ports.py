@@ -1,13 +1,12 @@
-from typing import Protocol
+from typing import Protocol, override
 from datetime import datetime
+
+from services.profile.app.ports import IProfileRepository
 
 
 class IUser(Protocol):
     id: int
     email: str
-    first_name: str
-    middle_name: str | None
-    last_name: str
     password_hash: str
     is_active: bool
     created_at: datetime
@@ -17,11 +16,8 @@ class IUserRepository(Protocol):
 
     async def get_user_by_email(self, email: str) -> IUser | None: ...
 
-    async def add_user(
+    async def add(
         self,
-        first_name: str,
-        middle_name: str | None,
-        last_name: str,
         email: str,
         password_hash: str,
     ) -> IUser: ...
@@ -43,7 +39,13 @@ class IJWTManager(Protocol):
     async def revoke(self, token: str) -> None: ...
 
 
-class IUserUoW(Protocol):
+class IUoW[T](Protocol):
 
-    async def __aenter__(self) -> IUserRepository: ...
+    async def __aenter__(self) -> T: ...
     async def __aexit__(self, exc_type, exc, tb): ...
+
+
+class IUserUoW(IUoW[IUserRepository]): ...
+
+
+class IRegisterUoW(IUoW[tuple[IUserRepository, IProfileRepository]]): ...

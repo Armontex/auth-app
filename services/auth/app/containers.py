@@ -1,11 +1,11 @@
 from dependency_injector import containers, providers
-from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from config.settings import settings
 
-from .ports import IJWTManager, IPasswordHasher
+from .ports import IJWTManager, IPasswordHasher, IUoW, IUserRepository, IProfileRepository
 from .usecases import RegisterUseCase, LoginUseCase, LogoutUseCase, DeleteUserUseCase
-from .uow.user import UserUoW, IUserUoW
+from .uow.user import UserUoW
 
 from ..infra.db.tokens.repos import ITokenRepository, TokenRepositoryRedis
 from ..infra.jwt.adapters.app_adapter import JWTManagerAdapter
@@ -15,17 +15,13 @@ from ..infra.security.hasher import PasswordHasher
 class AuthContainer(containers.DeclarativeContainer):
     session_maker = providers.Dependency(instance_of=async_sessionmaker)
 
-    wiring_config = containers.WiringConfiguration(
-        modules=["services.auth.api.v1.routers"]
-    )
-
     # ==== Infra ====
 
     redis_token_repo = providers.Singleton[ITokenRepository](
         TokenRepositoryRedis, url=settings.redis_url
     )
 
-    user_uow = providers.Factory[IUserUoW](UserUoW, session_factory=session_maker)
+    user_uow = providers.Factory[IUoW[IUserRepository]](UserUoW, session_factory=session_maker)
 
     jwt_manager = providers.Singleton[IJWTManager](
         JWTManagerAdapter,

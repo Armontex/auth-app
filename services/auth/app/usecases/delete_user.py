@@ -28,6 +28,6 @@ class DeleteUserUseCase:
                 await repo.delete_user(user_id)
 
         except InfraError as e:
-            raise DeleteUserError("Invalid or expired token") from e
+            raise DeleteUserError(str(e)) from e
         except RepositoryError as e:
-            raise DeleteUserNotExistsError("This user does not exist") from e
+            raise DeleteUserNotExistsError(str(e)) from e

@@ -41,7 +41,7 @@ def test_login_validation_error(client, override_login_usecase):
     )
 
     assert resp.status_code == status.HTTP_400_BAD_REQUEST
-    assert resp.json() == {"detail": {"email": ["invalid email address"]}}
+    assert resp.json() == {"detail": {"email": ["Invalid email address"]}}
 
 
 def test_login_invalid_credentials(client, override_login_usecase):

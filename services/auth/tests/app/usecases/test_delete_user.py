@@ -34,7 +34,7 @@ async def test_delete_user_raises_on_infra_error(
     use_case, jwt_manager, user_repo, user_uow
 ):
     token = "bad.jwt.token"
-    jwt_manager.verify.side_effect = InfraError("redis down")
+    jwt_manager.verify.side_effect = InfraError("Invalid or expired token")
 
     with pytest.raises(DeleteUserError) as exc_info:
         await use_case.execute(token)
@@ -55,12 +55,12 @@ async def test_delete_user_raises_on_repository_error(
     user_id = 42
 
     jwt_manager.verify.return_value = user_id
-    user_repo.delete_user.side_effect = RepositoryError("db error")
+    user_repo.delete_user.side_effect = RepositoryError("User does not exist")
 
     with pytest.raises(DeleteUserError) as exc_info:
         await use_case.execute(token)
 
-    assert "This user does not exist" in str(exc_info.value)
+    assert "User does not exist" in str(exc_info.value)
     jwt_manager.verify.assert_awaited_once_with(token)
     jwt_manager.revoke.assert_awaited_once_with(token)
     user_repo.delete_user.assert_awaited_once_with(user_id)

@@ -149,8 +149,7 @@ async def register(
     usecase: RegisterUseCase = Depends(get_register_usecase),
 ):
     try:
-        form = map_register_request_to_form(body)
-        user = await usecase.execute(form)
+        user = await usecase.execute(*map_register_request_to_form(body))
     except DomainValidationError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=e.errors

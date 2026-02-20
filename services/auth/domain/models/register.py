@@ -1,19 +1,15 @@
 from dataclasses import dataclass
 from .email import EmailAddress
-from ..utils import VALID_NAME_SYMBOLS, is_empty_string
+from ..utils import is_empty_string
 from ..exc import DomainValidationError
-from ..const import NAME_MAX_LENGTH, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH
+from ..const import PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH
 
 
 @dataclass(frozen=True)
 class RegisterForm:
-
-    first_name: str
-    last_name: str
     email: EmailAddress
     password: str
     confirm_password: str
-    middle_name: str | None = None
 
     def __post_init__(self):
         errors: dict[str, list[str]] = {}
@@ -23,42 +19,11 @@ class RegisterForm:
                 return
             errors.setdefault(field, []).extend(msgs)
 
-        add("first_name", self._validate_first_name())
-        add("last_name", self._validate_last_name())
-        add("middle_name", self._validate_middle_name())
         add("password", self._validate_password())
         add("confirm_password", self._validate_confirm_password())
 
         if errors:
             raise DomainValidationError(errors)
-
-    def _validate_first_name(self) -> list[str]:
-        return self.__validate_name(self.first_name)
-
-    def _validate_last_name(self) -> list[str]:
-        return self.__validate_name(self.last_name)
-
-    def _validate_middle_name(self) -> list[str] | None:
-        if self.middle_name is not None:
-            return self.__validate_name(self.middle_name)
-
-    @staticmethod
-    def __validate_name(value: str) -> list[str]:
-        messages = []
-
-        if is_empty_string(value):
-            messages.append("cannot be empty")
-
-        if len(value) > NAME_MAX_LENGTH:
-            messages.append(f"too long (max {NAME_MAX_LENGTH})")
-
-        messages.extend(
-            f"Invalid character '{char}'"
-            for char in value
-            if char not in VALID_NAME_SYMBOLS
-        )
-
-        return messages
 
     def _validate_password(self) -> list[str]:
         messages = []

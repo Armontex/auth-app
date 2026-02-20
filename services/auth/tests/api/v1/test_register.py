@@ -5,6 +5,7 @@ from fastapi import status
 
 from services.auth.api.v1.deps import get_register_usecase
 from services.auth.app.usecases import RegisterUseCase, RegisterError
+from services.auth.domain.exc import DomainValidationError
 
 
 @pytest.fixture
@@ -34,6 +35,7 @@ def test_register_success(client, override_register_usecase):
         json={
             "first_name": "Ivan",
             "last_name": "Ivanov",
+            "middle_name": None,
             "email": "ivan@example.com",
             "password": "secret123",
             "confirm_password": "secret123",
@@ -47,20 +49,26 @@ def test_register_success(client, override_register_usecase):
 
 
 def test_register_validation_error(client, override_register_usecase):
+
     resp = client.post(
         "/api/v1/auth/register",
         json={
             "first_name": "Ivan",
             "last_name": "Ivanov",
-            "email": "not-email",
+            "middle_name": None,
+            "email": "invalid-email",
             "password": "secret123",
-            "confirm_password": "different",
+            "confirm_password": "secret123",
         },
         headers={"Content-Type": "application/json"},
     )
 
     assert resp.status_code == status.HTTP_400_BAD_REQUEST
-    assert resp.json() == {"detail": {"email": ["invalid email address"]}}
+    assert resp.json() == {
+        "detail": {
+            "email": ["Invalid email address"],
+        }
+    }
 
 
 def test_register_conflict_email(client, override_register_usecase):
@@ -73,6 +81,7 @@ def test_register_conflict_email(client, override_register_usecase):
         json={
             "first_name": "Ivan",
             "last_name": "Ivanov",
+            "middle_name": None,
             "email": "ivan@example.com",
             "password": "secret123",
             "confirm_password": "secret123",
@@ -90,6 +99,7 @@ def test_register_unsupported_content_type(client, override_register_usecase):
         json={
             "first_name": "Ivan",
             "last_name": "Ivanov",
+            "middle_name": None,
             "email": "ivan@example.com",
             "password": "secret123",
             "confirm_password": "secret123",

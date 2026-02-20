@@ -1,10 +1,14 @@
+from typing import TYPE_CHECKING
 from datetime import datetime
 from sqlalchemy import String, DateTime, func, text, Boolean, Index
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from common.base.db import Base
-from services.auth.domain.const import NAME_MAX_LENGTH
+
+if TYPE_CHECKING:
+    from services.profile.infra.db.profiles.models import Profile
 
 
+# TODO: Добавить эндпоинты для смены пароля и почты
 class User(Base):
     __tablename__ = "users"
 
@@ -19,15 +23,18 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     email: Mapped[str] = mapped_column(nullable=False, index=True)
-    first_name: Mapped[str] = mapped_column(String(NAME_MAX_LENGTH), nullable=False)
-    middle_name: Mapped[str | None] = mapped_column(
-        String(NAME_MAX_LENGTH),
-    )
-    last_name: Mapped[str] = mapped_column(String(NAME_MAX_LENGTH), nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     is_active: Mapped[bool] = mapped_column(
         Boolean, server_default=text("true"), nullable=False
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+
+    profile: Mapped["Profile"] = relationship(
+        "Profile",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",
     )

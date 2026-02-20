@@ -1,5 +1,3 @@
-# services/auth/tests/app/conftest.py
-
 import pytest
 from unittest.mock import Mock, AsyncMock
 from datetime import datetime, timedelta, UTC
@@ -10,7 +8,10 @@ from services.auth.app.ports import (
     IUserUoW,
     IPasswordHasher,
     IJWTManager,
+    IRegisterUoW,
 )
+from services.profile.app.ports import IProfileRepository
+from services.profile.domain.models import Name
 
 
 # ==== IUser ====
@@ -22,9 +23,6 @@ def user() -> IUser:
     u = Mock()
     u.id = 42
     u.email = "test@example.com"
-    u.first_name = "John"
-    u.middle_name = None
-    u.last_name = "Smith"
     u.password_hash = "hashed_password"
     u.is_active = True
     u.created_at = now
@@ -38,12 +36,22 @@ def user() -> IUser:
 def user_repo(user) -> IUserRepository:
     repo = AsyncMock()
     repo.get_user_by_email = AsyncMock(return_value=user)
-    repo.add_user = AsyncMock(return_value=user)
+    repo.add = AsyncMock(return_value=user)  # новое имя метода
     repo.delete_user = AsyncMock(return_value=None)
     return repo
 
 
-# ==== IUserUoW ====
+# ==== IProfileRepository ====
+
+
+@pytest.fixture
+def profile_repo() -> IProfileRepository:
+    repo = AsyncMock()
+    repo.add = AsyncMock(return_value=None)
+    return repo
+
+
+# ==== IUserUoW ==== (для старых use-case’ов login/logout/delete и т.п.)
 
 
 @pytest.fixture
@@ -51,6 +59,21 @@ def user_uow(user_repo) -> IUserUoW:
     uow = AsyncMock()
     uow.__aenter__.return_value = user_repo
     uow.__aexit__.return_value = False
+    return uow
+
+
+# ==== IRegisterUoW ==== (для RegisterUseCase, который создаёт user + profile)
+
+
+@pytest.fixture
+def register_uow(user_repo, profile_repo) -> IRegisterUoW:
+    uow = AsyncMock()
+    # async with uow as (user_repo, profile_repo):
+    uow.__aenter__.return_value = (user_repo, profile_repo)
+    uow.__aexit__.return_value = False
+    # удобный доступ в тестах
+    uow.user_repo = user_repo
+    uow.profile_repo = profile_repo
     return uow
 
 

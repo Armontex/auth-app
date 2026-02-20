@@ -1,5 +1,5 @@
 from typing import override
-from sqlalchemy import select, update
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from common.base.db import BaseRepository
 from common.exc import RepositoryError
@@ -13,16 +13,6 @@ class UserRepository(BaseRepository, IUserRepository):
     async def get_user_by_email(
         self, email: str, is_active: bool = True
     ) -> User | None:
-        """Данная функция выдаёт первого user-а (только активного по-умолчанию) с равным `email` или,
-        если пользователь с такой почтой не существует, то `None`
-
-        Args:
-            email (str): Почта
-            is_active (bool, optional): Активный ли пользователь. По-умолчанию: True.
-
-        Returns:
-            User | None: `User` - если такой пользователь найден, иначе `None`
-        """
         stmt = (
             select(User)
             .where((User.email == email) & (User.is_active == is_active))
@@ -32,33 +22,12 @@ class UserRepository(BaseRepository, IUserRepository):
         return result.scalars().first()
 
     @override
-    async def add_user(
+    async def add(
         self,
-        first_name: str,
-        middle_name: str | None,
-        last_name: str,
         email: str,
         password_hash: str,
     ) -> User:
-        """Данная функция создаёт нового user-а
-
-        Args:
-            first_name (str): Имя
-            middle_name (str | None): Отчество (или None, если нет)
-            last_name (str): Фамилия
-            email (str): Почта
-            password_hash (str): Хеш пароля
-
-        Raises:
-            RepositoryError: Если пользователь с таким `email` уже существует
-
-        Returns:
-            User: Добавленный user
-        """
         new_user = User(
-            first_name=first_name,
-            middle_name=middle_name,
-            last_name=last_name,
             email=email,
             password_hash=password_hash,
         )
@@ -66,16 +35,15 @@ class UserRepository(BaseRepository, IUserRepository):
             self._session.add(new_user)
             await self._session.flush()
         except IntegrityError as e:
-            raise RepositoryError("email already exists") from e
+            raise RepositoryError("Email already exists") from e
 
         await self._session.refresh(new_user)
         return new_user
 
     @override
     async def delete_user(self, user_id: int) -> None:
-        smtp = (
-            update(User)
-            .where((User.id == user_id) & (User.is_active == True))
-            .values(is_active=False)
-        )
-        await self._session.execute(smtp)
+        user = await self._session.get(User, user_id)
+        if not user or not user.is_active:
+            raise RepositoryError("User does not exist")
+
+        user.is_active = False

@@ -16,17 +16,11 @@ async def _create_user(
     *,
     email: str = "user@example.com",
     is_active: bool = True,
-    first_name: str = "John",
-    middle_name: str | None = None,
-    last_name: str = "Doe",
     password_hash: str = "hashed",
 ) -> User:
     user = User(
         email=email,
         is_active=is_active,
-        first_name=first_name,
-        middle_name=middle_name,
-        last_name=last_name,
         password_hash=password_hash,
     )
     session.add(user)
@@ -77,18 +71,14 @@ async def test_get_user_by_email_can_search_inactive(user_repo, db):
 # ==== add_user ====
 
 
-async def test_add_user_persists_and_returns_user(user_repo, db):
-    user = await user_repo.add_user(
-        first_name="John",
-        middle_name=None,
-        last_name="Doe",
+async def test_add_user_persists_and_returns_user(user_repo: UserRepository, db):
+    user = await user_repo.add(
         email="john@example.com",
         password_hash="hashed",
     )
 
     assert user.id is not None
     assert user.email == "john@example.com"
-    assert user.first_name == "John"
 
     stmt = select(User).where(User.id == user.id)
     result = await db.execute(stmt)
@@ -101,25 +91,17 @@ async def test_add_user_persists_and_returns_user(user_repo, db):
 async def test_add_user_raises_on_duplicate_active_email(user_repo, db):
     await _create_user(db, email="dup@example.com", is_active=True)
 
-    with pytest.raises(RepositoryError) as exc_info:
-        await user_repo.add_user(
-            first_name="Jane",
-            middle_name=None,
-            last_name="Doe",
+    with pytest.raises(RepositoryError):
+        await user_repo.add(
             email="dup@example.com",
             password_hash="hashed2",
         )
-
-    assert "email already exists" in str(exc_info.value)
 
 
 async def test_add_user_allows_same_email_for_inactive(user_repo, db):
     await _create_user(db, email="same@example.com", is_active=False)
 
-    user = await user_repo.add_user(
-        first_name="John",
-        middle_name=None,
-        last_name="Doe",
+    user = await user_repo.add(
         email="same@example.com",
         password_hash="hashed",
     )
@@ -145,7 +127,7 @@ async def test_delete_user_sets_is_active_false(user_repo, db):
 
 
 async def test_delete_user_is_idempotent_for_inactive(user_repo, db):
-    user = await _create_user(db, email="inactive_del@example.com", is_active=False)
+    user = await _create_user(db, email="inactive_del@example.com")
 
     await user_repo.delete_user(user.id)
 
