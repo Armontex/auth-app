@@ -7,7 +7,7 @@ from services.auth.common.exc import InfraError
 class DeleteUserError(AppError): ...
 
 
-class DeleteUserErrorUseCase:
+class DeleteUserUseCase:
 
     def __init__(
         self,
@@ -21,10 +21,10 @@ class DeleteUserErrorUseCase:
         try:
             user_id = await self._jwt.verify(token)
             await self._jwt.revoke(token)
-            
+
             async with self._uow as repo:
                 await repo.delete_user(user_id)
-                
+
         except InfraError as e:
             raise DeleteUserError("Invalid or expired token") from e
         except RepositoryError as e:

@@ -5,6 +5,9 @@ from pydantic import SecretStr
 class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env")
+    
+    secret_key: SecretStr
+    redis_url: str
 
 
-settings = Settings()
+settings = Settings() # type: ignore

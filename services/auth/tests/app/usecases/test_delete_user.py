@@ -1,7 +1,7 @@
 import pytest
 
 from services.auth.app.usecases.delete_user import (
-    DeleteUserErrorUseCase,
+    DeleteUserUseCase,
     DeleteUserError,
 )
 from services.auth.common.exc import InfraError
@@ -10,7 +10,7 @@ from common.exc import RepositoryError
 
 @pytest.fixture
 def use_case(user_uow, jwt_manager):
-    return DeleteUserErrorUseCase(uow=user_uow, jwt_manager=jwt_manager)
+    return DeleteUserUseCase(uow=user_uow, jwt_manager=jwt_manager)
 
 
 @pytest.mark.asyncio
