@@ -18,26 +18,16 @@ class RegisterForm:
     def __post_init__(self):
         errors: dict[str, list[str]] = {}
 
-        first_name_errors = self._validate_first_name()
-        for msg in first_name_errors:
-            errors.setdefault("first_name", []).append(msg)
+        def add(field: str, msgs: list[str] | None):
+            if not msgs:
+                return
+            errors.setdefault(field, []).extend(msgs)
 
-        last_name_errors = self._validate_last_name()
-        for msg in last_name_errors:
-            errors.setdefault("last_name", []).append(msg)
-
-        middle_name_errors = self._validate_middle_name()
-        if middle_name_errors is not None:
-            for msg in middle_name_errors:
-                errors.setdefault("middle_name", []).append(msg)
-
-        password_errors = self._validate_password()
-        for msg in password_errors:
-            errors.setdefault("password", []).append(msg)
-
-        confirm_password_errors = self._validate_confirm_password()
-        for msg in confirm_password_errors:
-            errors.setdefault("confirm_password", []).append(msg)
+        add("first_name", self._validate_first_name())
+        add("last_name", self._validate_last_name())
+        add("middle_name", self._validate_middle_name())
+        add("password", self._validate_password())
+        add("confirm_password", self._validate_confirm_password())
 
         if errors:
             raise DomainValidationError(errors)

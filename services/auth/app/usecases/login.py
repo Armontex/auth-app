@@ -26,6 +26,6 @@ class LoginUseCase:
                 or not check_user.is_active
                 or not self._hasher.verify(form.password, check_user.password_hash)
             ):
-                raise LoginError("Invalid login or password")
+                raise LoginError("Invalid credentials.")
 
             return self._jwt.issue_access(check_user.id)

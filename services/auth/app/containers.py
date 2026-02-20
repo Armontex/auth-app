@@ -13,7 +13,7 @@ from ..infra.security.hasher import PasswordHasher
 
 
 class AuthContainer(containers.DeclarativeContainer):
-    session_maker = providers.Dependency(instance_of=async_sessionmaker[AsyncSession])
+    session_maker = providers.Dependency(instance_of=async_sessionmaker)
 
     wiring_config = containers.WiringConfiguration(
         modules=["services.auth.api.v1.routers"]

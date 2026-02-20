@@ -13,9 +13,10 @@
       - [role\_permissions](#role_permissions)
     - [Связи](#связи)
   - [Endpoints](#endpoints)
-    - [`auth/register`](#authregister)
-    - [`auth/login`](#authlogin)
-    - [`auth/logout`](#authlogout)
+    - [POST `/auth/register/`](#post-authregister)
+    - [POST `/auth/login/`](#post-authlogin)
+    - [POST `/auth/logout/`](#post-authlogout)
+    - [DELETE `/auth/`](#delete-auth)
 
 ---
 
@@ -66,7 +67,7 @@
 
 ## Endpoints
 
-### `auth/register`
+### POST `/auth/register/`
 
 **Доступность**: Public
 
@@ -75,46 +76,16 @@
 **Заголовки**:
 
 - Content-Type: application/json
-
-**Request**:
-
-```json
-{
-  "first_name": "some-first-name",
-  "middle_name": "some-middle-name",
-  "last_name": "some-last-name",
-  "email": "admin@example.com",
-  "password": "some-password",
-  "confirm_password": "some-password"
-}
-```
 
 **Response**:
 
 1. `201 Created` - успешная регистрация
 
-```json
-{ "id": 1, "email": "ivan@example.com" }
-```
-
 2. `400 Bad Request` - ошибки валидации
-
-```json
-{
-  "email": ["Enter a valid email address."],
-  "password": ["Passwords do not match."]
-}
-```
 
 3. `409 Conflict` - пользователь с таким `email` уже существует
 
-```json
-{
-  "detail": "User with this email already exists."
-}
-```
-
-### `auth/login`
+### POST `/auth/login/`
 
 **Доступность**: Public
 
@@ -124,40 +95,15 @@
 
 - Content-Type: application/json
 
-**Request**:
-
-```json
-{
-  "email": "your@example.com",
-  "password": "your-password"
-}
-```
-
 **Response**:
 
 1. `2O0 OK` - успешная авторизация
 
-```json
-{ "access_token": "<token>" }
-```
-
-После успешного login, клиент получает `access_token` и передаёт его в `Authorization: Bearer <token>`
-
 2. `400 Bad Request` - запрос неправильной формы
-
-```json
-{ "email": ["This field is required."] }
-```
 
 3. `401 Unauthorized` - неверные учётные данные.
 
-```json
-{
-  "detail": "Invalid credentials."
-}
-```
-
-### `auth/logout`
+### POST `/auth/logout/`
 
 **Доступность**: Protected
 
@@ -173,16 +119,20 @@
 
 2. `401 Unauthorized` - токен отсутствует / невалиден / истёк
 
-```json
-{
-  "detail": "Invalid or expired token."
-}
-```
+### DELETE `/auth/`
 
-или
+**Доступность**: Protected
 
-```json
-{
-  "detail": "Authentication credentials were not provided."
-}
-```
+**Метод**: `DELETE`
+
+**Заголовки**:
+
+- Authorization: Bearer `<token>`
+
+**Response**:
+
+1. `204 No Content` - пользователь успешно удалён, токен отозван
+
+2. `401 Unauthorized` - токен отсутствует / невалиден / истёк
+
+3. `404 Not Found` - пользователь не существует

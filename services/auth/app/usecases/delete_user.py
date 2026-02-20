@@ -6,6 +6,8 @@ from services.auth.common.exc import InfraError
 
 class DeleteUserError(AppError): ...
 
+class DeleteUserNotExistsError(DeleteUserError): ...
+
 
 class DeleteUserUseCase:
 
@@ -28,4 +30,4 @@ class DeleteUserUseCase:
         except InfraError as e:
             raise DeleteUserError("Invalid or expired token") from e
         except RepositoryError as e:
-            raise DeleteUserError("This user does not exist") from e
+            raise DeleteUserNotExistsError("This user does not exist") from e

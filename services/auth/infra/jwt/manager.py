@@ -8,7 +8,7 @@ from .ports import ITokenRepository
 
 @dataclass(frozen=True)
 class TokenPayload:
-    sub: int
+    sub: str
     jti: UUID
     iat: float
     exp: float
@@ -49,7 +49,7 @@ class JWTManager:
         exp = now + timedelta(minutes=expires_minutes)
 
         payload = {
-            "sub": user_id,
+            "sub": str(user_id),
             "jti": str(uuid.uuid4()),
             "iat": now.timestamp(),
             "exp": exp.timestamp(),
