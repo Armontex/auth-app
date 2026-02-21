@@ -3,8 +3,9 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime, timedelta, UTC
 from services.auth.common.types import UUID
-from .exc import VerifyError
 from .ports import ITokenRepository
+
+from services.auth.app.exc import TokenVerifyError
 
 @dataclass(frozen=True)
 class TokenPayload:
@@ -33,10 +34,10 @@ class JWTManager:
             )
             payload = TokenPayload(**row_payload)
         except jwt.InvalidTokenError as e:
-            raise VerifyError("Invalid or expired token") from e
+            raise TokenVerifyError("Invalid or expired token") from e
 
         if await self._token_repo.is_revoked(payload.jti):
-            raise VerifyError("Revoked token")
+            raise TokenVerifyError("Revoked token")
 
         return payload
 

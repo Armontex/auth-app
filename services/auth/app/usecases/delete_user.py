@@ -1,19 +1,15 @@
-from ..ports import IJWTManager, IUserUoW
-from .exc import AppError
-from common.exc import RepositoryError
-from services.auth.common.exc import InfraError
+from ..ports import IJWTManager, IUoW, IUserRepository
+from ..exc import DeleteUserError, TokenVerifyError, UserNotExists
 
 
-class DeleteUserError(AppError): ...
 
-class DeleteUserNotExistsError(DeleteUserError): ...
 
 
 class DeleteUserUseCase:
 
     def __init__(
         self,
-        uow: IUserUoW,
+        uow: IUoW[IUserRepository],
         jwt_manager: IJWTManager,
     ) -> None:
         self._uow = uow
@@ -27,7 +23,5 @@ class DeleteUserUseCase:
             async with self._uow as repo:
                 await repo.delete_user(user_id)
 
-        except InfraError as e:
+        except (TokenVerifyError, UserNotExists) as e:
             raise DeleteUserError(str(e)) from e
-        except RepositoryError as e:
-            raise DeleteUserNotExistsError(str(e)) from e

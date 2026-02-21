@@ -1,9 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
-from services.auth.app.ports import IUserUoW, IUserRepository
+from services.auth.app.ports import IUoW, IUserRepository
 from services.auth.infra.db.users.repos import UserRepository
 
 
-class UserUoW(IUserUoW):
+class UserUoW(IUoW[IUserRepository]):
     def __init__(self, session_factory: async_sessionmaker[AsyncSession]) -> None:
         self._session_factory = session_factory
 

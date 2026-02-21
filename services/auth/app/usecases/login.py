@@ -1,16 +1,13 @@
-from ..ports import IUserUoW, IPasswordHasher, IJWTManager
-from .exc import AppError
+from ..ports import IUoW, IUserRepository, IPasswordHasher, IJWTManager, IUser
+from ..exc import LoginError
 from ...domain.models import LoginForm
-
-
-class LoginError(AppError): ...
 
 
 class LoginUseCase:
 
     def __init__(
         self,
-        uow: IUserUoW,
+        uow: IUoW[IUserRepository],
         password_hasher: IPasswordHasher,
         jwt_manager: IJWTManager,
     ) -> None:
@@ -18,14 +15,18 @@ class LoginUseCase:
         self._hasher = password_hasher
         self._jwt = jwt_manager
 
-    async def execute(self, form: LoginForm) -> str:
+    async def authenticate(self, form: LoginForm) -> IUser:
         async with self._uow as repo:
-            check_user = await repo.get_user_by_email(form.email.value)
+            user = await repo.get_user_by_email(form.email.value)
             if (
-                not check_user
-                or not check_user.is_active
-                or not self._hasher.verify(form.password, check_user.password_hash)
+                not user
+                or not user.is_active
+                or not self._hasher.verify(form.password, user.password_hash)
             ):
-                raise LoginError("Invalid credentials.")
+                raise LoginError()
+            return user
 
-            return self._jwt.issue_access(check_user.id)
+    async def execute(self, form: LoginForm) -> str:
+        user = await self.authenticate(form)
+        return self._jwt.issue_access(user.id)
+    

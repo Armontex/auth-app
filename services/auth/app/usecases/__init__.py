@@ -1,4 +1,6 @@
-from .register import RegisterUseCase, RegisterError, RegisterForm
-from .login import LoginUseCase, LoginError, LoginForm
-from .logout import LogoutUseCase, LogoutError
-from .delete_user import DeleteUserUseCase, DeleteUserError, DeleteUserNotExistsError
+from .register import RegisterUseCase, RegisterForm
+from .login import LoginUseCase, LoginForm
+from .logout import LogoutUseCase
+from .delete_user import DeleteUserUseCase
+from .change_password import ChangePasswordUseCase, ChangePasswordForm
+from .change_email import ChangeEmailUseCase, ChangeEmailForm

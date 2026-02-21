@@ -2,8 +2,8 @@ from typing import override
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from common.base.db import BaseRepository
-from common.exc import RepositoryError
 from services.auth.app.ports import IUserRepository
+from services.auth.app.exc import EmailAlreadyExists, UserNotExists
 from .models import User
 
 
@@ -21,6 +21,10 @@ class UserRepository(BaseRepository, IUserRepository):
         result = await self._session.execute(stmt)
         return result.scalars().first()
 
+    async def _get_active_user_by_id(self, user_id: int) -> User | None:
+        user = await self._session.get(User, user_id)
+        return None if (not user or not user.is_active) else user
+
     @override
     async def add(
         self,
@@ -31,19 +35,34 @@ class UserRepository(BaseRepository, IUserRepository):
             email=email,
             password_hash=password_hash,
         )
+
+        self._session.add(new_user)
+
         try:
-            self._session.add(new_user)
             await self._session.flush()
         except IntegrityError as e:
-            raise RepositoryError("Email already exists") from e
+            raise EmailAlreadyExists() from e
 
         await self._session.refresh(new_user)
         return new_user
 
     @override
     async def delete_user(self, user_id: int) -> None:
-        user = await self._session.get(User, user_id)
-        if not user or not user.is_active:
-            raise RepositoryError("User does not exist")
+        user = await self._get_active_user_by_id(user_id)
+        if not user:
+            raise UserNotExists()
 
         user.is_active = False
+
+    @override
+    async def set_email(self, user: User, new_email: str) -> None:
+        user.email = new_email
+
+        try:
+            await self._session.flush()
+        except IntegrityError as e:
+            raise EmailAlreadyExists() from e
+
+    @override
+    async def set_password_hash(self, user: User, new_password_hash: str) -> None:
+        user.password_hash = new_password_hash

@@ -3,8 +3,15 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from config.settings import settings
 
-from .ports import IJWTManager, IPasswordHasher, IUoW, IUserRepository, IProfileRepository
-from .usecases import RegisterUseCase, LoginUseCase, LogoutUseCase, DeleteUserUseCase
+from .ports import IJWTManager, IPasswordHasher, IUoW, IUserRepository
+from .usecases import (
+    RegisterUseCase,
+    LoginUseCase,
+    LogoutUseCase,
+    DeleteUserUseCase,
+    ChangePasswordUseCase,
+    ChangeEmailUseCase,
+)
 from .uow.user import UserUoW
 
 from ..infra.db.tokens.repos import ITokenRepository, TokenRepositoryRedis
@@ -21,7 +28,9 @@ class AuthContainer(containers.DeclarativeContainer):
         TokenRepositoryRedis, url=settings.redis_url
     )
 
-    user_uow = providers.Factory[IUoW[IUserRepository]](UserUoW, session_factory=session_maker)
+    user_uow = providers.Factory[IUoW[IUserRepository]](
+        UserUoW, session_factory=session_maker
+    )
 
     jwt_manager = providers.Singleton[IJWTManager](
         JWTManagerAdapter,
@@ -53,4 +62,15 @@ class AuthContainer(containers.DeclarativeContainer):
         DeleteUserUseCase,
         uow=user_uow,
         jwt_manager=jwt_manager,
+    )
+
+    change_password_usecase = providers.Factory(
+        ChangePasswordUseCase,
+        uow=user_uow,
+        password_hasher=password_hasher,
+        login_usecase=login_usecase,
+    )
+
+    change_email_usecase = providers.Factory(
+        ChangeEmailUseCase, uow=user_uow, login_usecase=login_usecase
     )
