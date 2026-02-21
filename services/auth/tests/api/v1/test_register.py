@@ -5,7 +5,7 @@ from fastapi import status
 
 from services.auth.api.v1.deps import get_register_usecase
 from services.auth.app.usecases import RegisterUseCase, RegisterError
-from services.auth.domain.exc import DomainValidationError
+from services.auth.domain.exc import ValidationError
 
 
 @pytest.fixture

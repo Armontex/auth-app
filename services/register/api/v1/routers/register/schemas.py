@@ -26,3 +26,7 @@ class RegisterRequests(BaseModel):
 class RegisterResponse(BaseModel):
     id: int
     email: str
+
+    model_config = ConfigDict(
+        json_schema_extra={"example": {"id": 1, "email": "admin@example.com"}}
+    )

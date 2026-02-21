@@ -1,15 +1,18 @@
-from fastapi import status, HTTPException, Depends
+from fastapi import APIRouter, status, HTTPException, Depends
 
 from services.auth.app.usecases import DeleteUserUseCase
 from services.auth.app.exc import UserNotExists, TokenVerifyError
 
 from .deps import get_delete_user_usecase, get_bearer_token
-from .. import router
+
 
 from ...schemas import TokenVerifyErrorResponse, UserNotExistsResponse
 
+router = APIRouter()
+
+
 @router.delete(
-    path="",
+    path="/",
     status_code=status.HTTP_204_NO_CONTENT,
     responses={
         204: {"description": "Пользователь успешно удалён, токен отозван"},

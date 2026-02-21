@@ -22,26 +22,31 @@ class TokenVerifyErrorResponse(BaseModel):
     detail: str
 
     model_config = ConfigDict(
-        json_schema_extra={
-            "example": {"detail": "Invalid or expired token."}
-        }
+        json_schema_extra={"example": {"detail": "Invalid or expired token."}}
     )
-    
+
+
 class LoginErrorResponse(BaseModel):
     detail: str
 
     model_config = ConfigDict(
-        json_schema_extra={
-            "example": {"detail": "Invalid credentials."}
-        }
+        json_schema_extra={"example": {"detail": "Invalid credentials."}}
     )
-    
-    
+
+
 class UserNotExistsResponse(BaseModel):
     detail: str
 
     model_config = ConfigDict(
+        json_schema_extra={"example": {"detail": "This user does not exist"}}
+    )
+
+
+class EmailAlreadyExistsResponse(BaseModel):
+    detail: str
+
+    model_config = ConfigDict(
         json_schema_extra={
-            "example": {"detail": "This user does not exist"}
+            "example": {"detail": "A user with this email already exists."}
         }
     )

@@ -1,12 +1,14 @@
-from fastapi import status, HTTPException, Depends
+from fastapi import APIRouter, status, HTTPException, Depends
 
 from services.auth.app.usecases import LogoutUseCase
 from services.auth.app.exc import TokenVerifyError
 
 from .deps import get_logout_usecase, get_bearer_token
-from .. import router
 
 from ...schemas import TokenVerifyErrorResponse
+
+
+router = APIRouter()
 
 
 @router.post(

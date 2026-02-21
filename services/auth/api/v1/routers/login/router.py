@@ -1,4 +1,4 @@
-from fastapi import status, HTTPException, Depends
+from fastapi import APIRouter, status, HTTPException, Depends
 
 from services.auth.app.usecases import LoginUseCase
 from services.auth.domain.exc import ValidationError
@@ -8,9 +8,10 @@ from .schemas import LoginRequests, LoginResponse
 from .deps import validate_content_type, get_login_usecase
 from .mappers import map_login_request_to_form, map_token_to_response
 
-from .. import router
-
 from ...schemas import ValidationErrorResponse, LoginErrorResponse
+
+
+router = APIRouter()
 
 
 @router.post(

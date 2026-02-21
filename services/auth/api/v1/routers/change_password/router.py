@@ -1,4 +1,4 @@
-from fastapi import status, HTTPException, Depends
+from fastapi import APIRouter, status, HTTPException, Depends
 
 from services.auth.app.usecases import ChangePasswordUseCase
 from services.auth.app.exc import LoginError
@@ -7,8 +7,9 @@ from services.auth.domain.exc import ValidationError
 from .deps import validate_content_type, get_change_password_usecase
 from .schemas import ChangePasswordRequest
 from .mappers import map_request_to_form
-from .. import router
 from ...schemas import ValidationErrorResponse, LoginErrorResponse
+
+router = APIRouter()
 
 
 @router.post(
@@ -17,7 +18,7 @@ from ...schemas import ValidationErrorResponse, LoginErrorResponse
     responses={
         204: {"description": "Пароль успешно изменён"},
         400: {
-            "description": "Ошибки валидации",
+            "description": "Некорректные данные.",
             "content": {
                 "application/json": {
                     "schema": ValidationErrorResponse.model_json_schema(),

@@ -1,16 +1,20 @@
-from fastapi import status, HTTPException, Depends
+from fastapi import APIRouter, status, HTTPException, Depends
 
 from services.auth.app.usecases import ChangeEmailUseCase
-from services.auth.app.exc import LoginError
+from services.auth.app.exc import LoginError, EmailAlreadyExists
 from services.auth.domain.exc import ValidationError
 
 from .schemas import ChangeEmailRequest
 from .deps import get_change_email_usecase, validate_content_type
 from .mappers import map_request_to_form
 
-from .. import router
+from ...schemas import (
+    ValidationErrorResponse,
+    LoginErrorResponse,
+    EmailAlreadyExistsResponse,
+)
 
-from ...schemas import ValidationErrorResponse, LoginErrorResponse
+router = APIRouter()
 
 
 @router.post(
@@ -19,7 +23,7 @@ from ...schemas import ValidationErrorResponse, LoginErrorResponse
     responses={
         204: {"description": "Email успешно изменён"},
         400: {
-            "description": "Ошибки валидации",
+            "description": "Некорректные данные.",
             "content": {
                 "application/json": {
                     "schema": ValidationErrorResponse.model_json_schema(),
@@ -31,6 +35,14 @@ from ...schemas import ValidationErrorResponse, LoginErrorResponse
             "content": {
                 "application/json": {
                     "schema": LoginErrorResponse.model_json_schema(),
+                },
+            },
+        },
+        409: {
+            "description": "Пользователь с таким email уже существует",
+            "content": {
+                "application/json": {
+                    "schema": EmailAlreadyExistsResponse.model_json_schema(),
                 },
             },
         },
@@ -51,4 +63,8 @@ async def change_email(
     except LoginError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail=e.args[0]
+        ) from e
+    except EmailAlreadyExists as e:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail=e.args[0]
         ) from e

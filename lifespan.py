@@ -9,6 +9,10 @@ from sqlalchemy.ext.asyncio import (
 from config.settings import settings
 from common.base.db import Base
 
+from services.auth.app.containers import AuthContainer
+from services.register.app.containers import RegisterContainer
+from services.profile.app.containers import ProfileContainer
+
 
 def create_engine() -> AsyncEngine:
     return create_async_engine(settings.postgres_url, echo=False)
@@ -29,6 +33,20 @@ async def create_tables(engine: AsyncEngine) -> None:
         await conn.run_sync(Base.metadata.create_all)
 
 
+def create_containers(
+    app: FastAPI, session_maker: async_sessionmaker[AsyncSession]
+) -> None:
+    app.state.auth_container = AuthContainer(session_maker=session_maker)
+    app.state.register_container = RegisterContainer(
+        session_maker=session_maker,
+        password_hasher=app.state.auth_container.password_hasher,
+    )
+    app.state.profile_container = ProfileContainer(
+        session_maker=session_maker,
+        jwt_manager=app.state.auth_container.jwt_manager,
+    )
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     engine = create_engine()
@@ -36,6 +54,7 @@ async def lifespan(app: FastAPI):
     app.state.session_maker = session_maker
 
     await create_tables(engine)
+    create_containers(app, session_maker)
 
     try:
         yield

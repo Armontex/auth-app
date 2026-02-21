@@ -5,7 +5,6 @@ from config.settings import settings
 
 from .ports import IJWTManager, IPasswordHasher, IUoW, IUserRepository
 from .usecases import (
-    RegisterUseCase,
     LoginUseCase,
     LogoutUseCase,
     DeleteUserUseCase,
@@ -29,7 +28,7 @@ class AuthContainer(containers.DeclarativeContainer):
     )
 
     user_uow = providers.Factory[IUoW[IUserRepository]](
-        UserUoW, session_factory=session_maker
+        UserUoW, session_maker=session_maker
     )
 
     jwt_manager = providers.Singleton[IJWTManager](
@@ -41,10 +40,6 @@ class AuthContainer(containers.DeclarativeContainer):
     password_hasher = providers.Singleton[IPasswordHasher](PasswordHasher)
 
     # ==== UseCases ====
-
-    register_usecase = providers.Factory(
-        RegisterUseCase, uow=user_uow, password_hasher=password_hasher
-    )
 
     login_usecase = providers.Factory(
         LoginUseCase,

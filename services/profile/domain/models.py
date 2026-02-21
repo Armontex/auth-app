@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from .utils import is_empty_string, VALID_NAME_SYMBOLS
 from .const import NAME_MAX_LENGTH
-from .exc import DomainValidationError
+from .exc import ValidationError
 
 
 @dataclass
@@ -16,7 +16,7 @@ class Name:
             errors.setdefault("value", []).extend(value_messages)
 
         if errors:
-            raise DomainValidationError(errors)
+            raise ValidationError(errors)
 
     def _validate_value(self) -> list[str]:
         messages = []

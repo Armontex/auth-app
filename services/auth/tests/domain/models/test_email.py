@@ -1,6 +1,6 @@
 import pytest
 from services.auth.domain.models import EmailAddress
-from services.auth.domain.exc import DomainValidationError
+from services.auth.domain.exc import ValidationError
 
 
 @pytest.mark.parametrize(
@@ -42,10 +42,10 @@ def test_good_emails(row_email, expected):
 )
 def test_invalid_emails(invalid_email):
 
-    with pytest.raises(DomainValidationError) as exc_info:
+    with pytest.raises(ValidationError) as exc_info:
         EmailAddress(invalid_email)
 
     err = exc_info.value
-    assert isinstance(err, DomainValidationError)
+    assert isinstance(err, ValidationError)
     assert err.errors
     assert err.errors.get("email") == ["Invalid email address"]
