@@ -12,6 +12,6 @@ class EmailAddress:
             value = self.value.strip().lower()
             res = validate_email(value, check_deliverability=False)
         except EmailNotValidError as e:
-            raise ValidationError({"email": ["Invalid email address"]}) from e
+            raise ValidationError({"email": [f"Invalid email address: '{value}'"]}) from e
 
         object.__setattr__(self, "value", res.normalized)

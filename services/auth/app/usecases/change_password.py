@@ -17,6 +17,10 @@ class ChangePasswordUseCase:
         self._login_usecase = login_usecase
 
     async def execute(self, form: ChangePasswordForm) -> None:
+        """
+        Raises:
+            LoginError: Неверные учетные данные.
+        """
         user = await self._login_usecase.authenticate(form)
 
         async with self._uow as repo:

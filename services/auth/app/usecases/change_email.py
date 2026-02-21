@@ -1,6 +1,5 @@
 from ..ports import IUoW, IUserRepository
 from .login import LoginUseCase
-from ..exc import EmailAlreadyExists, ChangeEmailError
 
 from ...domain.models import ChangeEmailForm
 
@@ -16,10 +15,11 @@ class ChangeEmailUseCase:
         self._login_usecase = login_usecase
 
     async def execute(self, form: ChangeEmailForm) -> None:
+        """
+        Raises:
+            LoginError: Неверные учетные данные.
+            EmailAlreadyExists: Пользователь с таким `email` уже существует.
+        """
         user = await self._login_usecase.authenticate(form)
-
-        try:
-            async with self._uow as repo:
-                await repo.set_email(user, form.new_email.value)
-        except EmailAlreadyExists as e:
-            raise ChangeEmailError(str(e)) from e
+        async with self._uow as repo:
+            await repo.set_email(user, form.new_email.value)

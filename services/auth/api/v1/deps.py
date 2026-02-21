@@ -1,12 +1,6 @@
-from fastapi import Depends, Request, Header, HTTPException, status
+from fastapi import Request, Header, HTTPException, status
 from api.v1.deps import get_session_maker
 from ...app.containers import AuthContainer
-from ...app.usecases import (
-    RegisterUseCase,
-    LoginUseCase,
-    LogoutUseCase,
-    DeleteUserUseCase,
-)
 
 
 def get_bearer_token(authorization: str | None = Header(default=None)) -> str:
@@ -47,27 +41,3 @@ def get_auth_container(request: Request) -> AuthContainer:
         session_maker = get_session_maker(request)
         request.app.state.auth_container = AuthContainer(session_maker=session_maker)
     return request.app.state.auth_container
-
-
-def get_register_usecase(
-    container: AuthContainer = Depends(get_auth_container),
-) -> RegisterUseCase:
-    return container.register_usecase()
-
-
-def get_login_usecase(
-    container: AuthContainer = Depends(get_auth_container),
-) -> LoginUseCase:
-    return container.login_usecase()
-
-
-def get_logout_usecase(
-    container: AuthContainer = Depends(get_auth_container),
-) -> LogoutUseCase:
-    return container.logout_usecase()
-
-
-def get_delete_user_usecase(
-    container: AuthContainer = Depends(get_auth_container),
-) -> DeleteUserUseCase:
-    return container.delete_user_usecase()

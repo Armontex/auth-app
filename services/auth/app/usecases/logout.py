@@ -1,8 +1,4 @@
 from ..ports import IJWTManager
-from ..exc import LogoutError, TokenVerifyError
-
-
-
 
 
 class LogoutUseCase:
@@ -14,7 +10,8 @@ class LogoutUseCase:
         self._jwt = jwt_manager
 
     async def execute(self, token: str) -> None:
-        try:
-            await self._jwt.revoke(token)
-        except TokenVerifyError as e:
-            raise LogoutError(str(e)) from e
+        """
+        Raises:
+            TokenVerifyError: Неверный, истёкший или отозванный токен.
+        """
+        await self._jwt.revoke(token)

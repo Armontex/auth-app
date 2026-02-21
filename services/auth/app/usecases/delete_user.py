@@ -1,8 +1,4 @@
 from ..ports import IJWTManager, IUoW, IUserRepository
-from ..exc import DeleteUserError, TokenVerifyError, UserNotExists
-
-
-
 
 
 class DeleteUserUseCase:
@@ -16,12 +12,13 @@ class DeleteUserUseCase:
         self._jwt = jwt_manager
 
     async def execute(self, token: str) -> None:
-        try:
-            user_id = await self._jwt.verify(token)
-            await self._jwt.revoke(token)
+        """
+        Raises:
+            TokenVerifyError: Неверный, истёкший или отозванный токен.
+            UserNotExists: Пользователь не существует.
+        """
+        user_id = await self._jwt.verify(token)
+        await self._jwt.revoke(token)
 
-            async with self._uow as repo:
-                await repo.delete_user(user_id)
-
-        except (TokenVerifyError, UserNotExists) as e:
-            raise DeleteUserError(str(e)) from e
+        async with self._uow as repo:
+            await repo.delete_user(user_id)

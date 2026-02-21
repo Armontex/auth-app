@@ -1,5 +1,4 @@
 from ..ports import IUoW, IUserRepository, IUser, IPasswordHasher
-from ..exc import EmailAlreadyExists, RegisterError
 from ...domain.models import RegisterForm
 
 
@@ -12,11 +11,12 @@ class RegisterUseCase:
         self._hasher = password_hasher
 
     async def execute(self, form: RegisterForm) -> IUser:
-        try:
-            async with self._uow as repo:
-                return await repo.add(
-                    email=form.email.value,
-                    password_hash=self._hasher.hash(form.password.value),
-                )
-        except EmailAlreadyExists as e:
-            raise RegisterError(str(e)) from e
+        """
+        Raises:
+            EmailAlreadyExists: Пользователь с таким `email` уже существует.
+        """
+        async with self._uow as repo:
+            return await repo.add(
+                email=form.email.value,
+                password_hash=self._hasher.hash(form.password.value),
+            )

@@ -1,22 +1,9 @@
 from ..common.exc import AppError
 
-
-class RegisterError(AppError): ...
-
-
 class LoginError(AppError):
 
     def __init__(self, message: str | None = None) -> None:
         super().__init__(message or "Invalid credentials.")
-
-
-class DeleteUserError(AppError): ...
-
-
-class LogoutError(AppError): ...
-
-
-class ChangeEmailError(AppError): ...
 
 
 class EmailAlreadyExists(AppError):

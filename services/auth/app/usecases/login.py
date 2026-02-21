@@ -16,6 +16,10 @@ class LoginUseCase:
         self._jwt = jwt_manager
 
     async def authenticate(self, form: LoginForm) -> IUser:
+        """
+        Raises:
+            LoginError: Неверные учетные данные.
+        """
         async with self._uow as repo:
             user = await repo.get_user_by_email(form.email.value)
             if (
@@ -27,6 +31,9 @@ class LoginUseCase:
             return user
 
     async def execute(self, form: LoginForm) -> str:
+        """
+        Raises:
+            LoginError: Неверные учетные данные.
+        """
         user = await self.authenticate(form)
         return self._jwt.issue_access(user.id)
-    
