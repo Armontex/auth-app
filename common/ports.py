@@ -2,12 +2,14 @@ from typing import Protocol, runtime_checkable
 from datetime import datetime
 
 
+@runtime_checkable
 class IUoW[T](Protocol):
 
     async def __aenter__(self) -> T: ...
     async def __aexit__(self, exc_type, exc, tb): ...
 
 
+@runtime_checkable
 class IJWTManager(Protocol):
 
     def issue_access(self, user_id: int) -> str: ...
@@ -21,6 +23,12 @@ class IPasswordHasher(Protocol):
     def hash(self, password: str) -> str: ...
 
     def verify(self, password: str, password_hash: str) -> bool: ...
+
+
+@runtime_checkable
+class IUseCase[TInput, TResult](Protocol):
+
+    async def execute(self, input: TInput) -> TResult: ...
 
 
 class IUser(Protocol):

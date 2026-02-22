@@ -1,6 +1,6 @@
-from ..ports import IUoW, IUserRepository, IPasswordHasher
 from .login import LoginUseCase
-
+from ..uow import UserUoW
+from ..ports import IPasswordHasher
 from ...domain.models import ChangePasswordForm
 
 
@@ -8,7 +8,7 @@ class ChangePasswordUseCase:
 
     def __init__(
         self,
-        uow: IUoW[IUserRepository],
+        uow: UserUoW,
         password_hasher: IPasswordHasher,
         login_usecase: LoginUseCase,
     ) -> None:
@@ -23,6 +23,6 @@ class ChangePasswordUseCase:
         """
         user = await self._login_usecase.authenticate(form)
 
-        async with self._uow as repo:
+        async with self._uow as repos:
             new_password_hash = self._hasher.hash(form.new_password.value)
-            await repo.set_password_hash(user, new_password_hash)
+            await repos.user.set_password_hash(user, new_password_hash)

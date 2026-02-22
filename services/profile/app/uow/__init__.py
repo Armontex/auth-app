@@ -1,1 +1,1 @@
-from .update import UpdateUoW
+from .profile import ProfileUoW

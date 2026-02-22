@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from config.settings import settings
 
-from .ports import IJWTManager, IPasswordHasher, IUoW, IUserRepository
+from .uow import UserUoW
 from .usecases import (
     LoginUseCase,
     LogoutUseCase,
@@ -11,34 +11,30 @@ from .usecases import (
     ChangePasswordUseCase,
     ChangeEmailUseCase,
     AuthorizeUseCase,
+    RegisterUseCase,
 )
-from .uow.user import UserUoW
 
-from ..infra.db.tokens.repos import ITokenRepository, TokenRepositoryRedis
+from ..infra.db.tokens.repos import TokenRepositoryRedis
 from ..infra.jwt.adapters.app_adapter import JWTManagerAdapter
 from ..infra.security.hasher import PasswordHasher
 
 
 class AuthContainer(containers.DeclarativeContainer):
-    session_maker = providers.Dependency(instance_of=async_sessionmaker)
+    session_maker = providers.Dependency(async_sessionmaker)
 
     # ==== Infra ====
 
-    redis_token_repo = providers.Singleton[ITokenRepository](
-        TokenRepositoryRedis, url=settings.redis_url
-    )
+    redis_token_repo = providers.Singleton(TokenRepositoryRedis, url=settings.redis_url)
 
-    user_uow = providers.Factory[IUoW[IUserRepository]](
-        UserUoW, session_maker=session_maker
-    )
-
-    jwt_manager = providers.Singleton[IJWTManager](
+    jwt_manager = providers.Singleton(
         JWTManagerAdapter,
         token_repo=redis_token_repo,
         secret_key=settings.secret_key.get_secret_value(),
     )
 
-    password_hasher = providers.Singleton[IPasswordHasher](PasswordHasher)
+    password_hasher = providers.Singleton(PasswordHasher)
+
+    user_uow = providers.Factory(UserUoW, session_maker=session_maker)
 
     # ==== UseCases ====
 
@@ -75,3 +71,7 @@ class AuthContainer(containers.DeclarativeContainer):
         logout_usecase=logout_usecase,
         authorize_usecase=authorize_usecase,
     )
+
+    # ==== Factory ====
+
+    register_factory = providers.Factory(RegisterUseCase).provider

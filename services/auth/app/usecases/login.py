@@ -1,4 +1,5 @@
-from ..ports import IUoW, IUserRepository, IPasswordHasher, IJWTManager, IUser
+from ..uow import UserUoW
+from ..ports import IPasswordHasher, IJWTManager, IUser
 from ..exc import LoginError
 from ...domain.models import LoginForm
 
@@ -7,7 +8,7 @@ class LoginUseCase:
 
     def __init__(
         self,
-        uow: IUoW[IUserRepository],
+        uow: UserUoW,
         password_hasher: IPasswordHasher,
         jwt_manager: IJWTManager,
     ) -> None:
@@ -20,8 +21,8 @@ class LoginUseCase:
         Raises:
             LoginError: Неверные учетные данные.
         """
-        async with self._uow as repo:
-            user = await repo.get_user_by_email(form.email.value)
+        async with self._uow as repos:
+            user = await repos.user.get_user_by_email(form.email.value)
             if (
                 not user
                 or not user.is_active

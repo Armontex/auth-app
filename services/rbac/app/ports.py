@@ -1,5 +1,5 @@
 from typing import Protocol
-from common.ports import IUoW, IRole, IPermission
+from common.ports import IUoW, IRole, IPermission, IUser
 
 
 class IRoleRepository(Protocol):

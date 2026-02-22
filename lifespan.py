@@ -38,12 +38,15 @@ def create_containers(
     app: FastAPI, session_maker: async_sessionmaker[AsyncSession]
 ) -> None:
     app.state.auth_container = AuthContainer(session_maker=session_maker)
+    app.state.profile_container = ProfileContainer(session_maker=session_maker)
+    app.state.rbac_container = RbacContainer(session_maker=session_maker)
     app.state.register_container = RegisterContainer(
         session_maker=session_maker,
         password_hasher=app.state.auth_container.password_hasher,
+        auth_register_factory=app.state.auth_container.register_factory,
+        profile_register_factory=app.state.profile_container.register_factory,
+        set_role_func=app.state.rbac_container.set_role_func,
     )
-    app.state.profile_container = ProfileContainer(session_maker=session_maker)
-    app.state.rbac_container = RbacContainer(session_maker=session_maker)
 
 
 async def init_rbac(container: RbacContainer) -> None:

@@ -1,39 +1,28 @@
-from services.auth.app.usecases import (
-    RegisterUseCase as AuthRegisterUseCase,
-    RegisterForm as AuthRegisterForm,
-)
-from services.auth.app.ports import IUserRepository
 from common.ports import IUser, IPasswordHasher
 
-from services.profile.app.usecases import (
-    RegisterUseCase as ProfileRegisterUseCase,
-    RegisterForm as ProfileRegisterForm,
-)
-from services.profile.app.ports import IProfileRepository
+from ..uow import RegisterUoW
+from ..ports import AuthResisterFactory, ProfileRegisterFactory, SetRoleFunc
 
-from services.rbac.app.usecases import SetRoleUseCase
-from services.rbac.app.ports import IUserRolesRepository, IRoleRepository
+from services.auth.app.usecases import RegisterForm as AuthRegisterForm
+from services.profile.app.usecases import RegisterForm as ProfileRegisterForm
 from services.rbac.domain.const import Role
-
-from ..ports import IUoW
 
 
 class RegisterUseCase:
 
     def __init__(
         self,
-        uow: IUoW[
-            tuple[
-                IUserRepository,
-                IProfileRepository,
-                IRoleRepository,
-                IUserRolesRepository,
-            ]
-        ],
+        uow: RegisterUoW,
         password_hasher: IPasswordHasher,
+        make_auth_register: AuthResisterFactory,
+        make_profile_register: ProfileRegisterFactory,
+        set_role: SetRoleFunc,
     ) -> None:
         self._uow = uow
         self._hasher = password_hasher
+        self._make_auth_register = make_auth_register
+        self._make_profile_register = make_profile_register
+        self._set_role = set_role
 
     async def execute(
         self, auth_form: AuthRegisterForm, profile_form: ProfileRegisterForm
@@ -44,15 +33,12 @@ class RegisterUseCase:
             ProfileAlreadyExists: Профиль с таким `user_id` уже существует.
             RoleNotFound: Роль не найдена.
         """
-        async with self._uow as (auth_repo, profile_repo, role_repo, user_roles_repo):
-            auth_reg_usecase = AuthRegisterUseCase(auth_repo, self._hasher)
-            profile_reg_usecase = ProfileRegisterUseCase(profile_repo)
+        async with self._uow as repos:
+            auth_register = self._make_auth_register(repos.user, self._hasher)
+            prof_register = self._make_profile_register(repos.profile)
 
-            user = await auth_reg_usecase.execute(auth_form)
-            await profile_reg_usecase.execute(user.id, profile_form)
+            user = await auth_register.execute(auth_form)
+            await prof_register.execute(user.id, profile_form)
 
-            await SetRoleUseCase.set_role(
-                user.id, Role.USER, role_repo, user_roles_repo
-            )
-
+            await self._set_role(user.id, Role.USER, repos.role, repos.user_roles)
             return user

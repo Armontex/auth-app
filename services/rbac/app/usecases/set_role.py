@@ -1,13 +1,13 @@
-from ..ports import IUoW, IRoleRepository, IUserRolesRepository
-from ..exc import (
-    RoleNotFound,
-)
+from ..ports import IRoleRepository, IUserRolesRepository
+from ..exc import RoleNotFound
+from ..uow import SetRoleUoW
+
 from ...domain.const import Role
 
 
 class SetRoleUseCase:
 
-    def __init__(self, uow: IUoW[tuple[IRoleRepository, IUserRolesRepository]]) -> None:
+    def __init__(self, uow: SetRoleUoW) -> None:
         self._uow = uow
 
     @staticmethod
@@ -36,5 +36,5 @@ class SetRoleUseCase:
         Raises:
             RoleNotFound: Роль не найдена.
         """
-        async with self._uow as (role_repo, user_roles_repo):
-            await self.set_role(user_id, role, role_repo, user_roles_repo)
+        async with self._uow as repos:
+            await self.set_role(user_id, role, repos.role, repos.user_roles)

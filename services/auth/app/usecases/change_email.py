@@ -1,6 +1,5 @@
-from ..ports import IUoW, IUserRepository
 from .login import LoginUseCase
-
+from ..uow import UserUoW
 from ...domain.models import ChangeEmailForm
 
 
@@ -8,7 +7,7 @@ class ChangeEmailUseCase:
 
     def __init__(
         self,
-        uow: IUoW[IUserRepository],
+        uow: UserUoW,
         login_usecase: LoginUseCase,
     ) -> None:
         self._uow = uow
@@ -21,5 +20,5 @@ class ChangeEmailUseCase:
             EmailAlreadyExists: Пользователь с таким `email` уже существует.
         """
         user = await self._login_usecase.authenticate(form)
-        async with self._uow as repo:
-            await repo.set_email(user, form.new_email.value)
+        async with self._uow as repos:
+            await repos.user.set_email(user, form.new_email.value)

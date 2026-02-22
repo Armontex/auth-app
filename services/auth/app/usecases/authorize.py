@@ -1,10 +1,11 @@
-from ..ports import IJWTManager, IUser, IUoW, IUserRepository
+from ..ports import IJWTManager, IUser
 from ..exc import UserNotExists
+from ..uow import UserUoW
 
 
 class AuthorizeUseCase:
 
-    def __init__(self, uow: IUoW[IUserRepository], jwt_manager: IJWTManager) -> None:
+    def __init__(self, uow: UserUoW, jwt_manager: IJWTManager) -> None:
         self._uow = uow
         self._jwt = jwt_manager
 
@@ -21,8 +22,8 @@ class AuthorizeUseCase:
             TokenVerifyError: Неверный, истёкший или отозванный токен.
         """
         user_id = await self.verify_token(token)
-        async with self._uow as repo:
-            user = await repo.get_active_user_by_id(user_id)
+        async with self._uow as repos:
+            user = await repos.user.get_active_user_by_id(user_id)
             if not user:
                 raise UserNotExists
             return user

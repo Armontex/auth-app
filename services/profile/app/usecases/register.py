@@ -3,9 +3,8 @@ from ..ports import IProfileRepository
 from ...domain.models import RegisterForm
 
 
-
 class RegisterUseCase:
-    
+
     def __init__(self, repo: IProfileRepository) -> None:
         self._repo = repo
 

@@ -1,4 +1,4 @@
-from ..ports import IUoW, IUserRepository
+from ..uow import UserUoW
 from .logout import LogoutUseCase
 from .authorize import AuthorizeUseCase
 
@@ -7,7 +7,7 @@ class DeleteUserUseCase:
 
     def __init__(
         self,
-        uow: IUoW[IUserRepository],
+        uow: UserUoW,
         logout_usecase: LogoutUseCase,
         authorize_usecase: AuthorizeUseCase,
     ) -> None:
@@ -23,7 +23,7 @@ class DeleteUserUseCase:
         """
         user_id = await self._authorize.verify_token(token)
 
-        async with self._uow as repo:
-            await repo.delete_user(user_id)
+        async with self._uow as repos:
+            await repos.user.delete_user(user_id)
 
         await self._logout.execute(token)
