@@ -12,6 +12,7 @@ from common.base.db import Base
 from services.auth.app.containers import AuthContainer
 from services.register.app.containers import RegisterContainer
 from services.profile.app.containers import ProfileContainer
+from services.rbac.app.containers import RbacContainer
 
 
 def create_engine() -> AsyncEngine:
@@ -45,6 +46,12 @@ def create_containers(
         session_maker=session_maker,
         jwt_manager=app.state.auth_container.jwt_manager,
     )
+    app.state.rbac_container = RbacContainer(session_maker=session_maker)
+
+
+async def init_rbac(container: RbacContainer) -> None:
+    usecase = container.init_rbac_usecase()
+    await usecase.execute()
 
 
 @asynccontextmanager
@@ -55,6 +62,7 @@ async def lifespan(app: FastAPI):
 
     await create_tables(engine)
     create_containers(app, session_maker)
+    await init_rbac(app.state.rbac_container)
 
     try:
         yield

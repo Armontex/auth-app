@@ -21,8 +21,9 @@ class UserRepository(BaseRepository, IUserRepository):
         result = await self._session.execute(stmt)
         return result.scalars().first()
 
-    async def _get_active_user_by_id(self, user_id: int) -> User | None:
-        user = await self._session.get(User, user_id)
+    @override
+    async def get_active_user_by_id(self, id: int) -> User | None:
+        user = await self._session.get(User, id)
         return None if (not user or not user.is_active) else user
 
     @override
@@ -48,7 +49,7 @@ class UserRepository(BaseRepository, IUserRepository):
 
     @override
     async def delete_user(self, user_id: int) -> None:
-        user = await self._get_active_user_by_id(user_id)
+        user = await self.get_active_user_by_id(user_id)
         if not user:
             raise UserNotExists()
 

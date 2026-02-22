@@ -25,8 +25,9 @@ class ProfileRepository(BaseRepository, IProfileRepository):
             middle_name=middle_name,
             last_name=last_name,
         )
+        self._session.add(new_profile)
+        
         try:
-            self._session.add(new_profile)
             await self._session.flush()
         except IntegrityError as e:
             raise ProfileAlreadyExists() from e

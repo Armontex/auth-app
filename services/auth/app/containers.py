@@ -10,6 +10,7 @@ from .usecases import (
     DeleteUserUseCase,
     ChangePasswordUseCase,
     ChangeEmailUseCase,
+    AuthorizeUseCase,
 )
 from .uow.user import UserUoW
 
@@ -68,4 +69,8 @@ class AuthContainer(containers.DeclarativeContainer):
 
     change_email_usecase = providers.Factory(
         ChangeEmailUseCase, uow=user_uow, login_usecase=login_usecase
+    )
+
+    authorize_usecase = providers.Factory(
+        AuthorizeUseCase, uow=user_uow, jwt_manager=jwt_manager
     )

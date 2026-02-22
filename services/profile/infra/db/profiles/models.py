@@ -1,3 +1,4 @@
+from typing import TYPE_CHECKING
 from sqlalchemy import String, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -5,9 +6,8 @@ from common.base.db import Base
 
 from services.profile.domain.const import NAME_MAX_LENGTH
 
-
-from services.auth.infra.db.users.models import User
-    
+if TYPE_CHECKING:
+    from services.auth.infra.db.users.models import User
 
 
 class Profile(Base):
@@ -25,4 +25,4 @@ class Profile(Base):
     )
     last_name: Mapped[str] = mapped_column(String(NAME_MAX_LENGTH), nullable=False)
 
-    user: Mapped[User] = relationship(back_populates="profile")
+    user: Mapped["User"] = relationship(back_populates="profile")

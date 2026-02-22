@@ -6,9 +6,9 @@ from common.base.db import Base
 
 if TYPE_CHECKING:
     from services.profile.infra.db.profiles.models import Profile
+    from services.rbac.infra.db.roles.models import Role
 
 
-# TODO: Добавить эндпоинты для смены пароля и почты
 class User(Base):
     __tablename__ = "users"
 
@@ -31,10 +31,13 @@ class User(Base):
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
 
-
     profile: Mapped["Profile"] = relationship(
         "Profile",
         back_populates="user",
         uselist=False,
         cascade="all, delete-orphan",
+    )
+
+    roles: Mapped[list["Role"]] = relationship(
+        back_populates="users", secondary="user_roles"
     )

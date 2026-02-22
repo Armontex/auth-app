@@ -1,8 +1,11 @@
-from typing import Protocol
+from typing import Protocol, TYPE_CHECKING
 from datetime import datetime
 
 from common.ports import IUoW, IJWTManager, IPasswordHasher
 
+if TYPE_CHECKING:
+    from services.profile.app.ports import IProfile
+    from services.rbac.app.ports import IRole
 
 class IUser(Protocol):
     id: int
@@ -10,11 +13,15 @@ class IUser(Protocol):
     password_hash: str
     is_active: bool
     created_at: datetime
+    profile: "IProfile"
+    roles: list["IRole"]
 
 
 class IUserRepository(Protocol):
 
     async def get_user_by_email(self, email: str) -> IUser | None: ...
+
+    async def get_active_user_by_id(self, id: int) -> IUser | None: ...
 
     async def add(
         self,

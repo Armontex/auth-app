@@ -1,13 +1,18 @@
-from typing import Protocol
+from typing import Protocol, TYPE_CHECKING
 
 from common.ports import IUoW, IJWTManager, IPasswordHasher
+
+if TYPE_CHECKING:
+    from services.auth.app.ports import IUser
 
 
 class IProfile(Protocol):
     id: int
+    user_id: int
     first_name: str
     middle_name: str | None
     last_name: str
+    user: "IUser"
 
 
 class IProfileRepository(Protocol):

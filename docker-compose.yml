@@ -9,6 +9,7 @@ services:
       - .env
     ports:
       - "8000:8000"
+
   pg:
     image: postgres:${POSTGRES_VERSION}
     restart: always
