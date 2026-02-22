@@ -1,5 +1,5 @@
 from .schemas import RegisterRequests, RegisterResponse
-from services.auth.app.ports import IUser
+from common.ports import IUser
 from services.auth.domain.models.register import (
     RegisterForm as AuthRegisterForm,
     EmailAddress,

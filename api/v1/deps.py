@@ -3,7 +3,9 @@ from typing import Any
 from fastapi import Header, HTTPException, status, Depends, Request
 from services.rbac.domain.const import Permission
 from services.auth.app.containers import AuthContainer, AuthorizeUseCase
-from services.auth.app.ports import IUser
+from services.register.app.containers import RegisterContainer
+from services.profile.app.containers import ProfileContainer
+from common.ports import IUser
 
 
 def get_bearer_token(authorization: str | None = Header(default=None)) -> str:
@@ -43,6 +45,14 @@ def get_auth_container(request: Request) -> AuthContainer:
     return request.app.state.auth_container
 
 
+def get_register_container(request: Request) -> RegisterContainer:
+    return request.app.state.register_container
+
+
+def get_profile_container(request: Request) -> ProfileContainer:
+    return request.app.state.profile_container
+
+
 def get_authorize_usecase(
     container: AuthContainer = Depends(get_auth_container),
 ) -> AuthorizeUseCase:
@@ -69,7 +79,5 @@ class RequirePermission:
         user = await usecase.execute(token)
 
         if not self._has_permission(user):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden"
-            )
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
         return user

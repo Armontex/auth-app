@@ -54,3 +54,7 @@ class ProfileRepository(BaseRepository, IProfileRepository):
         self, profile: IProfile, new_middle_name: str | None
     ) -> None:
         profile.middle_name = new_middle_name
+
+    @override
+    async def refresh(self, profile: Profile) -> None:
+        await self._session.refresh(profile)

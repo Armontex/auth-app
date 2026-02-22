@@ -1,18 +1,6 @@
-from typing import Protocol, TYPE_CHECKING
+from typing import Protocol
 
-from common.ports import IUoW, IJWTManager, IPasswordHasher
-
-if TYPE_CHECKING:
-    from services.auth.app.ports import IUser
-
-
-class IProfile(Protocol):
-    id: int
-    user_id: int
-    first_name: str
-    middle_name: str | None
-    last_name: str
-    user: "IUser"
+from common.ports import IUoW, IProfile
 
 
 class IProfileRepository(Protocol):
@@ -32,3 +20,5 @@ class IProfileRepository(Protocol):
     async def set_middle_name(
         self, profile: IProfile, new_middle_name: str | None
     ) -> None: ...
+
+    async def refresh(self, profile: IProfile) -> None: ...

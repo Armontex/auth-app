@@ -1,20 +1,5 @@
-from typing import Protocol, TYPE_CHECKING
-from datetime import datetime
-
-from common.ports import IUoW, IJWTManager, IPasswordHasher
-
-if TYPE_CHECKING:
-    from services.profile.app.ports import IProfile
-    from services.rbac.app.ports import IRole
-
-class IUser(Protocol):
-    id: int
-    email: str
-    password_hash: str
-    is_active: bool
-    created_at: datetime
-    profile: "IProfile"
-    roles: list["IRole"]
+from typing import Protocol
+from common.ports import IUoW, IJWTManager, IPasswordHasher, IUser
 
 
 class IUserRepository(Protocol):

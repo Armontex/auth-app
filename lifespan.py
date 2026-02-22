@@ -42,10 +42,7 @@ def create_containers(
         session_maker=session_maker,
         password_hasher=app.state.auth_container.password_hasher,
     )
-    app.state.profile_container = ProfileContainer(
-        session_maker=session_maker,
-        jwt_manager=app.state.auth_container.jwt_manager,
-    )
+    app.state.profile_container = ProfileContainer(session_maker=session_maker)
     app.state.rbac_container = RbacContainer(session_maker=session_maker)
 
 

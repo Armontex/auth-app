@@ -1,21 +1,5 @@
-from typing import Protocol, TYPE_CHECKING
-from common.ports import IUoW
-
-if TYPE_CHECKING:
-    from services.auth.app.ports import IUser
-
-
-class IRole(Protocol):
-    id: int
-    name: str
-    users: list["IUser"]
-    permissions: list["IPermission"]
-
-
-class IPermission(Protocol):
-    id: int
-    code: str
-    roles: list["IRole"]
+from typing import Protocol
+from common.ports import IUoW, IRole, IPermission
 
 
 class IRoleRepository(Protocol):

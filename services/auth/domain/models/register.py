@@ -23,7 +23,7 @@ class RegisterForm:
     def _validate_confirm_password(self) -> list[str]:
         messages = []
 
-        if self.password != self.confirm_password:
+        if self.password.value != self.confirm_password:
             messages.append("passwords do not match")
 
         return messages

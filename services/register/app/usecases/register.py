@@ -2,7 +2,8 @@ from services.auth.app.usecases import (
     RegisterUseCase as AuthRegisterUseCase,
     RegisterForm as AuthRegisterForm,
 )
-from services.auth.app.ports import IUser, IUserRepository, IPasswordHasher
+from services.auth.app.ports import IUserRepository
+from common.ports import IUser, IPasswordHasher
 
 from services.profile.app.usecases import (
     RegisterUseCase as ProfileRegisterUseCase,
@@ -49,9 +50,9 @@ class RegisterUseCase:
 
             user = await auth_reg_usecase.execute(auth_form)
             await profile_reg_usecase.execute(user.id, profile_form)
-            
+
             await SetRoleUseCase.set_role(
                 user.id, Role.USER, role_repo, user_roles_repo
             )
-            
+
             return user
