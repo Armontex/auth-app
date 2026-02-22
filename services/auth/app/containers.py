@@ -54,12 +54,6 @@ class AuthContainer(containers.DeclarativeContainer):
         jwt_manager=jwt_manager,
     )
 
-    delete_user_usecase = providers.Factory(
-        DeleteUserUseCase,
-        uow=user_uow,
-        jwt_manager=jwt_manager,
-    )
-
     change_password_usecase = providers.Factory(
         ChangePasswordUseCase,
         uow=user_uow,
@@ -73,4 +67,11 @@ class AuthContainer(containers.DeclarativeContainer):
 
     authorize_usecase = providers.Factory(
         AuthorizeUseCase, uow=user_uow, jwt_manager=jwt_manager
+    )
+
+    delete_user_usecase = providers.Factory(
+        DeleteUserUseCase,
+        uow=user_uow,
+        logout_usecase=logout_usecase,
+        authorize_usecase=authorize_usecase,
     )
