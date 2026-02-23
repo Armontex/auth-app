@@ -4,13 +4,12 @@ from common.ports import IUser
 from api.v1.schemas import TokenVerifyErrorResponse
 
 from services.profile.app.usecases import UpdateUseCase
-from services.rbac.domain.const import Permission
 
-from .deps import get_update_usecase
+from .deps import get_update_usecase, require_profile_me_update
 from .mappers import map_profile_to_response, map_request_to_form
 from .schemas import UpdateResponse, UpdateRequest
 
-from ...deps import RequirePermission, validate_content_type
+from ...deps import validate_content_type
 from ...schemas import ValidationErrorResponse
 
 
@@ -51,7 +50,7 @@ router = APIRouter()
 )
 async def update_profile(
     body: UpdateRequest,
-    user: IUser = Depends(RequirePermission(Permission.PROFILE_ME_UPDATE)),
+    user: IUser = Depends(require_profile_me_update),
     usecase: UpdateUseCase = Depends(get_update_usecase),
 ):
     try:

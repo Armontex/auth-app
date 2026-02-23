@@ -2,16 +2,20 @@ from fastapi import APIRouter, status, Depends, Query, HTTPException
 from typing import Annotated
 
 from common.ports import IUser
-from api.v1.deps import RequirePermission
 from api.v1.schemas import TokenVerifyErrorResponse
 
-from services.rbac.domain.const import Permission
 from services.profile.app.usecases import ReadMeProfileUseCase, ReadProfileUseCase
 from services.profile.app.exc import ProfileNotFound
 
 from .schemas import ProfileResponse
-from .deps import get_read_me_prof_usecase, get_read_prof_usecase
+from .deps import (
+    get_read_me_prof_usecase,
+    get_read_prof_usecase,
+    require_profile_me_read,
+    require_profile_read,
+)
 from .mappers import map_prof_to_response
+
 
 router = APIRouter()
 
@@ -35,7 +39,7 @@ router = APIRouter()
     response_model=ProfileResponse,
 )
 async def read_me_profile(
-    user: IUser = Depends(RequirePermission(Permission.PROFILE_ME_READ)),
+    user: IUser = Depends(require_profile_me_read),
     usecase: ReadMeProfileUseCase = Depends(get_read_me_prof_usecase),
 ):
     profile = usecase.execute(user)
@@ -68,7 +72,7 @@ async def read_me_profile(
 async def read_profile(
     user_id: Annotated[int, Query(description="ID пользователя")],
     usecase: ReadProfileUseCase = Depends(get_read_prof_usecase),
-    _: IUser = Depends(RequirePermission(Permission.PROFILE_READ)),
+    _: IUser = Depends(require_profile_read),
 ):
     try:
         profile = await usecase.execute(user_id)
