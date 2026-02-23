@@ -1,5 +1,3 @@
-from typing import Any
-
 from fastapi import Header, HTTPException, status, Depends, Request
 from services.rbac.domain.const import Permission
 from services.auth.app.containers import AuthContainer, AuthorizeUseCase

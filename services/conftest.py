@@ -1,17 +1,11 @@
 import pytest
 import os
-from contextlib import asynccontextmanager
-
 
 from testcontainers.postgres import PostgresContainer
 from testcontainers.redis import RedisContainer
 
-from fastapi.testclient import TestClient
-from fastapi import FastAPI
-
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 
-from main import create_app
 from common.base.db import Base
 
 import services.rbac.infra.db.user_roles.models
@@ -67,21 +61,3 @@ def redis_url():
         host = container.get_container_host_ip()
         port = container.get_exposed_port(6379)
         yield f"redis://{host}:{port}/0"
-
-
-@pytest.fixture
-def app_for_tests() -> FastAPI:
-    app = create_app()
-
-    @asynccontextmanager
-    async def fake_lifespan(app: FastAPI):
-        yield
-
-    app.router.lifespan_context = fake_lifespan
-    return app
-
-
-@pytest.fixture
-def client(app_for_tests):
-    with TestClient(app_for_tests) as c:
-        yield c
