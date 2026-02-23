@@ -1,24 +1,27 @@
 import pytest
 from unittest.mock import AsyncMock
-
 from fastapi import status
 
-from services.auth.app.usecases import LoginUseCase
+from services.auth.app.usecases import ChangePasswordUseCase
 from services.auth.app.exc import LoginError
 from services.auth.domain.exc import ValidationError
-from services.auth.api.v1.routers.login.deps import get_login_usecase
+from services.auth.api.v1.routers.change_password.deps import (
+    get_change_password_usecase,
+)
 
 
 @pytest.fixture
 def usecase_mock() -> AsyncMock:
-    uc = AsyncMock(spec=LoginUseCase)
+    uc = AsyncMock(spec=ChangePasswordUseCase)
     uc.execute = AsyncMock()
     return uc
 
 
 @pytest.fixture(autouse=True)
 def override_usecase(app_for_tests, usecase_mock):
-    app_for_tests.dependency_overrides[get_login_usecase] = lambda: usecase_mock
+    app_for_tests.dependency_overrides[get_change_password_usecase] = (
+        lambda: usecase_mock
+    )
     yield
     app_for_tests.dependency_overrides.clear()
 
@@ -26,24 +29,19 @@ def override_usecase(app_for_tests, usecase_mock):
 def _valid_body():
     return {
         "email": "user@example.com",
-        "password": "password",
+        "old_password": "old-password",
+        "new_password": "new-password",
     }
 
 
-def test_login_success(client, usecase_mock):
-    usecase_mock.execute.return_value = "token-123"
+def test_change_password_success(client, usecase_mock):
+    response = client.post("/api/v1/auth/change-password", json=_valid_body())
 
-    response = client.post("/api/v1/auth/login", json=_valid_body())
-
-    assert response.status_code == status.HTTP_200_OK
-    assert response.json() == {"access_token": "token-123"}
+    assert response.status_code == status.HTTP_204_NO_CONTENT
     usecase_mock.execute.assert_awaited_once()
-    # кука выставляется
-    cookies = response.cookies
-    assert cookies.get("access_token") == "token-123"
 
 
-def test_login_validation_error(client, usecase_mock):
+def test_change_password_validation_error(client, usecase_mock):
     err = ValidationError(errors={"field": ["msg"]})
 
     async def failing_execute(_):
@@ -51,13 +49,13 @@ def test_login_validation_error(client, usecase_mock):
 
     usecase_mock.execute.side_effect = failing_execute
 
-    response = client.post("/api/v1/auth/login", json=_valid_body())
+    response = client.post("/api/v1/auth/change-password", json=_valid_body())
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert response.json() == {"detail": {"field": ["msg"]}}
 
 
-def test_login_error_invalid_credentials(client, usecase_mock):
+def test_change_password_login_error(client, usecase_mock):
     err = LoginError("invalid credentials")
 
     async def failing_execute(_):
@@ -65,7 +63,7 @@ def test_login_error_invalid_credentials(client, usecase_mock):
 
     usecase_mock.execute.side_effect = failing_execute
 
-    response = client.post("/api/v1/auth/login", json=_valid_body())
+    response = client.post("/api/v1/auth/change-password", json=_valid_body())
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     assert response.json() == {"detail": "invalid credentials"}

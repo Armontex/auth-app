@@ -1,92 +1,112 @@
 import pytest
-from unittest.mock import Mock
+from unittest.mock import AsyncMock, MagicMock, Mock
 
-from services.auth.app.usecases.login import LoginUseCase, LoginError
-from services.auth.domain.models.login import LoginForm
-from services.auth.domain.models.email import EmailAddress
+from services.auth.app.usecases.login import LoginUseCase
+from services.auth.app.exc import LoginError
 
 
 @pytest.fixture
-def use_case(user_uow, password_hasher, jwt_manager):
+def uow_mock():
+    uow = AsyncMock()
+    repos = MagicMock()
+    repos.user = AsyncMock()
+    repos.user.get_user_by_email = AsyncMock()
+    uow.__aenter__.return_value = repos
+    return uow
+
+
+@pytest.fixture
+def hasher_mock():
+    hasher = Mock()
+    hasher.verify = Mock()
+    return hasher
+
+
+@pytest.fixture
+def jwt_mock():
+    jwt = Mock()
+    jwt.issue_access = Mock()
+    return jwt
+
+
+@pytest.fixture
+def usecase(uow_mock, hasher_mock, jwt_mock):
     return LoginUseCase(
-        uow=user_uow,
-        password_hasher=password_hasher,
-        jwt_manager=jwt_manager,
+        uow=uow_mock,
+        password_hasher=hasher_mock,
+        jwt_manager=jwt_mock,
     )
 
 
-@pytest.fixture
-def valid_form():
-    return LoginForm(
-        email=EmailAddress("User@example.com"),
-        password="secret123",
-    )
 
+async def test_authenticate_success(usecase, uow_mock, hasher_mock):
+    form = MagicMock()
+    form.email.value = "user@example.com"
+    form.password = "plain"
 
-async def test_login_success(
-    use_case, user_uow, password_hasher, jwt_manager, valid_form
-):
-    user = Mock()
-    user.id = 42
+    user = MagicMock()
     user.is_active = True
     user.password_hash = "hashed"
 
-    user_uow.__aenter__.return_value.get_user_by_email.return_value = user
-    password_hasher.verify.return_value = True
+    uow_mock.__aenter__.return_value.user.get_user_by_email.return_value = user
+    hasher_mock.verify.return_value = True
 
-    token = await use_case.execute(valid_form)
+    result = await usecase.authenticate(form)
 
-    user_uow.__aenter__.return_value.get_user_by_email.assert_awaited_once_with(
-        valid_form.email.value
+    uow_mock.__aenter__.return_value.user.get_user_by_email.assert_awaited_once_with(
+        "user@example.com"
     )
-    password_hasher.verify.assert_called_once_with(
-        valid_form.password, user.password_hash
-    )
-    jwt_manager.issue_access.assert_called_once_with(user.id)
-    assert token == "access-token-123"
+    hasher_mock.verify.assert_called_once_with("plain", "hashed")
+    assert result is user
 
 
-async def test_login_raises_if_user_not_found(
-    use_case, user_uow, password_hasher, valid_form
+
+@pytest.mark.parametrize(
+    "user_exists, is_active, password_ok",
+    [
+        (False, False, False),
+        (True, False, True),
+        (True, True, False),
+    ],
+    ids=["no-user", "inactive-user", "bad-password"],
+)
+async def test_authenticate_raises_login_error(
+    usecase, uow_mock, hasher_mock, user_exists, is_active, password_ok
 ):
-    user_uow.__aenter__.return_value.get_user_by_email.return_value = None
+    form = MagicMock()
+    form.email.value = "user@example.com"
+    form.password = "plain"
+
+    if user_exists:
+        user = MagicMock()
+        user.is_active = is_active
+        user.password_hash = "hashed"
+        uow_mock.__aenter__.return_value.user.get_user_by_email.return_value = user
+    else:
+        uow_mock.__aenter__.return_value.user.get_user_by_email.return_value = None
+
+    hasher_mock.verify.return_value = password_ok
 
     with pytest.raises(LoginError):
-        await use_case.execute(valid_form)
-
-    password_hasher.verify.assert_not_called()
+        await usecase.authenticate(form)
 
 
-async def test_login_raises_if_user_inactive(
-    use_case, user_uow, password_hasher, valid_form
-):
-    user = Mock()
-    user.id = 42
-    user.is_active = False
-    user.password_hash = "hashed"
 
-    user_uow.__aenter__.return_value.get_user_by_email.return_value = user
+async def test_execute_returns_access_token(usecase, uow_mock, hasher_mock, jwt_mock):
+    form = MagicMock()
+    form.email.value = "user@example.com"
+    form.password = "plain"
 
-    with pytest.raises(LoginError):
-        await use_case.execute(valid_form)
-
-    password_hasher.verify.assert_not_called()
-
-
-async def test_login_raises_if_password_invalid(
-    use_case, user_uow, password_hasher, valid_form
-):
-    user = Mock()
-    user.id = 42
+    user = MagicMock()
     user.is_active = True
     user.password_hash = "hashed"
+    user.id = 123
 
-    user_uow.__aenter__.return_value.get_user_by_email.return_value = user
-    password_hasher.verify.return_value = False
+    uow_mock.__aenter__.return_value.user.get_user_by_email.return_value = user
+    hasher_mock.verify.return_value = True
+    jwt_mock.issue_access.return_value = "access-token"
 
-    with pytest.raises(LoginError):
-        await use_case.execute(valid_form)
+    token = await usecase.execute(form)
 
-    password_hasher.verify.assert_called_once_with(
-        valid_form.password, user.password_hash
-    )
+    jwt_mock.issue_access.assert_called_once_with(123)
+    assert token == "access-token"

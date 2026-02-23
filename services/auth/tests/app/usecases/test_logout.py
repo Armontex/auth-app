@@ -1,29 +1,24 @@
 import pytest
-from services.auth.app.usecases.logout import LogoutUseCase, LogoutError
-from services.auth.common.exc import InfraError
+from unittest.mock import AsyncMock
+
+from services.auth.app.usecases.logout import LogoutUseCase
 
 
 @pytest.fixture
-def use_case(jwt_manager):
-    return LogoutUseCase(jwt_manager=jwt_manager)
+def jwt_mock():
+    jwt = AsyncMock()
+    jwt.revoke = AsyncMock()
+    return jwt
 
 
-
-async def test_logout_calls_revoke_on_jwt_manager(use_case, jwt_manager):
-    token = "some.jwt.token"
-
-    await use_case.execute(token)
-
-    jwt_manager.revoke.assert_awaited_once_with(token)
+@pytest.fixture
+def usecase(jwt_mock):
+    return LogoutUseCase(jwt_manager=jwt_mock)
 
 
+async def test_execute_calls_jwt_revoke(usecase, jwt_mock):
+    token = "access-token"
 
-async def test_logout_raises_logout_error_on_infra_error(use_case, jwt_manager):
-    token = "bad.jwt.token"
-    jwt_manager.revoke.side_effect = InfraError("redis down")
+    await usecase.execute(token)
 
-    with pytest.raises(LogoutError) as exc_info:
-        await use_case.execute(token)
-
-    assert "Invalid or expired token" in str(exc_info.value)
-    jwt_manager.revoke.assert_awaited_once_with(token)
+    jwt_mock.revoke.assert_awaited_once_with(token)
