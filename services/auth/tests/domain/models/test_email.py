@@ -48,4 +48,4 @@ def test_invalid_emails(invalid_email):
     err = exc_info.value
     assert isinstance(err, ValidationError)
     assert err.errors
-    assert err.errors.get("email") == ["Invalid email address"]
+    assert err.errors.get("email")

@@ -1,107 +1,37 @@
 import pytest
-import services.auth.domain.models.register as rf
+
+from services.auth.domain.models import RegisterForm, EmailAddress, Password
+from services.auth.domain.exc import ValidationError
 
 
-def _extract_errors(exc: rf.ValidationError) -> dict:
-    if hasattr(exc, "errors") and isinstance(getattr(exc, "errors"), dict):
-        return exc.errors
-    if getattr(exc, "args", None) and isinstance(exc.args[0], dict):
-        return exc.args[0]
-    raise AssertionError(f"Cannot extract errors dict from {exc!r}")
+def test_register_form_ok():
+    email = EmailAddress("user@example.com")
+    password = Password("super-secret-password")
+    form = RegisterForm(email=email, password=password, confirm_password=password.value)
+
+    assert form.email is email
+    assert form.password is password
+    assert form.confirm_password == password.value
 
 
-def _valid_form_kwargs(**overrides):
-    base = {
-        "email": object(),
-        "password": "a" * rf.PASSWORD_MIN_LENGTH,
-        "confirm_password": "a" * rf.PASSWORD_MIN_LENGTH,
-    }
-    base.update(overrides)
-    return base
+@pytest.mark.parametrize(
+    "password_value, confirm_value",
+    [
+        pytest.param("secret-1", "secret-2", id="different-values"),
+        pytest.param("secret-1", "", id="empty-confirm"),
+        pytest.param("secret-1", "secret-1 ", id="extra-space"),
+    ],
+)
+def test_register_form_passwords_do_not_match(password_value, confirm_value):
+    email = EmailAddress("user@example.com")
+    password = Password(password_value)
 
+    with pytest.raises(ValidationError) as exc_info:
+        RegisterForm(email=email, password=password, confirm_password=confirm_value)
 
-def test_valid_form_ok():
-    rf.RegisterForm(**_valid_form_kwargs())
-
-
-def test_password_too_short_error_only_short():
-    short = "a" * (rf.PASSWORD_MIN_LENGTH - 1)
-
-    with pytest.raises(rf.ValidationError) as exc_info:
-        rf.RegisterForm(**_valid_form_kwargs(password=short, confirm_password=short))
-
-    errors = _extract_errors(exc_info.value)
-    assert "password" in errors
-    assert f"too short (min {rf.PASSWORD_MIN_LENGTH})" in errors["password"]
-
-
-def test_password_cannot_start_with_space():
-    p = " " + ("a" * (rf.PASSWORD_MIN_LENGTH - 1))
-
-    with pytest.raises(rf.ValidationError) as exc_info:
-        rf.RegisterForm(**_valid_form_kwargs(password=p, confirm_password=p))
-
-    errors = _extract_errors(exc_info.value)
-    assert "password" in errors
-    assert "cannot start with a space" in errors["password"]
-
-
-def test_password_cannot_end_with_space():
-    p = ("a" * (rf.PASSWORD_MIN_LENGTH - 1)) + " "
-
-    with pytest.raises(rf.ValidationError) as exc_info:
-        rf.RegisterForm(**_valid_form_kwargs(password=p, confirm_password=p))
-
-    errors = _extract_errors(exc_info.value)
-    assert "password" in errors
-    assert "cannot end with a space" in errors["password"]
-
-
-def test_password_too_long_error():
-    p = "a" * (rf.PASSWORD_MAX_LENGTH + 1)
-
-    with pytest.raises(rf.ValidationError) as exc_info:
-        rf.RegisterForm(**_valid_form_kwargs(password=p, confirm_password=p))
-
-    errors = _extract_errors(exc_info.value)
-    assert "password" in errors
-    assert f"too long (max {rf.PASSWORD_MAX_LENGTH})" in errors["password"]
-
-
-def test_confirm_password_empty_gives_two_errors():
-    with pytest.raises(rf.ValidationError) as exc_info:
-        rf.RegisterForm(**_valid_form_kwargs(confirm_password=""))
-
-    errors = _extract_errors(exc_info.value)
-    assert "confirm_password" in errors
-    assert "cannot be empty" in errors["confirm_password"]
-    assert "passwords do not match" in errors["confirm_password"]
-
-
-def test_confirm_password_mismatch_error():
-    with pytest.raises(rf.ValidationError) as exc_info:
-        rf.RegisterForm(
-            **_valid_form_kwargs(confirm_password="b" * rf.PASSWORD_MIN_LENGTH)
-        )
-
-    errors = _extract_errors(exc_info.value)
-    assert "confirm_password" in errors
-    assert "passwords do not match" in errors["confirm_password"]
-
-
-def test_multiple_fields_errors_collected():
-    short = "a" * (rf.PASSWORD_MIN_LENGTH - 1)
-
-    with pytest.raises(rf.ValidationError) as exc_info:
-        rf.RegisterForm(
-            **_valid_form_kwargs(
-                password=short,
-                confirm_password="",
-            )
-        )
-
-    errors = _extract_errors(exc_info.value)
-    assert set(errors.keys()) >= {
-        "password",
-        "confirm_password",
-    }
+    err = exc_info.value
+    assert isinstance(err, ValidationError)
+    assert err.errors
+    messages = err.errors.get("password")
+    assert messages
+    assert "passwords do not match" in messages
