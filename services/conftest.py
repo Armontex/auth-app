@@ -69,9 +69,6 @@ def redis_url():
         yield f"redis://{host}:{port}/0"
 
 
-# import pytest
-
-
 @pytest.fixture
 def app_for_tests() -> FastAPI:
     app = create_app()

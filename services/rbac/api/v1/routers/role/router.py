@@ -2,12 +2,11 @@ from fastapi import APIRouter, status, Depends, Query, HTTPException
 from typing import Annotated
 
 from common.ports import IUser
-from api.v1.deps import RequirePermission
+
 from api.v1.schemas import UserNotExistsResponse, TokenVerifyErrorResponse
 
 from services.auth.app.exc import UserNotExists
 from services.rbac.app.exc import RoleNotFound
-from services.rbac.domain.const import Permission
 from services.rbac.app.usecases import (
     ReadMeRolesUseCase,
     ReadRolesUseCase,
@@ -19,6 +18,9 @@ from .deps import (
     get_read_me_roles_usecase,
     get_read_roles_usecase,
     get_set_role_usecase,
+    require_role_me_read,
+    require_role_read,
+    require_role_set
 )
 from .mappers import map_role_name_to_role
 
@@ -45,7 +47,7 @@ router = APIRouter(prefix="/role", tags=["role"])
     response_model=ReadRolesResponse,
 )
 async def read_me_roles(
-    user: IUser = Depends(RequirePermission(Permission.ROLE_ME_READ)),
+    user: IUser = Depends(require_role_me_read),
     usecase: ReadMeRolesUseCase = Depends(get_read_me_roles_usecase),
 ):
     return usecase.execute(user)
@@ -79,10 +81,10 @@ async def read_me_roles(
 async def read_roles(
     user_id: Annotated[int, Query(description="ID пользователя")],
     usecase: ReadRolesUseCase = Depends(get_read_roles_usecase),
-    _: IUser = Depends(RequirePermission(Permission.ROLE_READ)),
+    _: IUser = Depends(require_role_read),
 ):
     try:
-        return usecase.execute(user_id)
+        return await usecase.execute(user_id)
     except UserNotExists as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=e.args[0]
@@ -114,7 +116,7 @@ async def read_roles(
 async def set_role(
     body: SetRoleRequest,
     set_role: SetRoleUseCase = Depends(get_set_role_usecase),
-    _: IUser = Depends(RequirePermission(Permission.ROLE_SET)),
+    _: IUser = Depends(require_role_set),
 ):
     try:
         role = map_role_name_to_role(body.role)

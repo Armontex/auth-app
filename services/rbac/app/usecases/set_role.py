@@ -40,6 +40,6 @@ class SetRoleUseCase:
             UserNotExists: Такого пользователя не существует.
         """
         async with self._uow as repos:
-            if not repos.user.get_active_user_by_id(user_id):
+            if not await repos.user.get_active_user_by_id(user_id):
                 raise UserNotExists
             await self.set_role(user_id, role, repos.role, repos.user_roles)

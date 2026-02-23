@@ -2,15 +2,20 @@ from fastapi import APIRouter, status, HTTPException, Depends, Query
 from typing import Annotated
 
 from common.ports import IUser
-from api.v1.deps import RequirePermission
+
 from api.v1.schemas import UserNotExistsResponse, TokenVerifyErrorResponse
 
 from services.auth.app.exc import UserNotExists
-from services.rbac.domain.const import Permission
+
 from services.rbac.app.usecases import ReadPermissionsUseCase, ReadMePermissionsUseCase
 
 from .schemas import ReadPermissionsResponse
-from .deps import get_read_me_perms_usecase, get_read_perms_usecase
+from .deps import (
+    get_read_me_perms_usecase,
+    get_read_perms_usecase,
+    require_permission_me_read,
+    require_permission_read,
+)
 
 
 router = APIRouter(prefix="/permission", tags=["permission"])
@@ -35,7 +40,7 @@ router = APIRouter(prefix="/permission", tags=["permission"])
     response_model=ReadPermissionsResponse,
 )
 async def read_me_permissions(
-    user: IUser = Depends(RequirePermission(Permission.PERMISSION_ME_READ)),
+    user: IUser = Depends(require_permission_me_read),
     usecase: ReadMePermissionsUseCase = Depends(get_read_me_perms_usecase),
 ):
     return usecase.execute(user)
@@ -69,10 +74,10 @@ async def read_me_permissions(
 async def read_permissions(
     user_id: Annotated[int, Query(description="ID пользователя")],
     usecase: ReadPermissionsUseCase = Depends(get_read_perms_usecase),
-    _: IUser = Depends(RequirePermission(Permission.PERMISSION_READ)),
+    _: IUser = Depends(require_permission_read),
 ):
     try:
-        return usecase.execute(user_id)
+        return await usecase.execute(user_id)
     except UserNotExists as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=e.args[0]
