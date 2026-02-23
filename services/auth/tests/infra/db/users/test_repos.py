@@ -3,151 +3,125 @@ from sqlalchemy import select
 
 from services.auth.infra.db.users.models import User
 from services.auth.infra.db.users.repos import UserRepository
-from common.exc import RepositoryError
+from services.auth.app.exc import EmailAlreadyExists, UserNotExists
 
 
 @pytest.fixture
 def user_repo(db):
-    return UserRepository(db)
+    return UserRepository(session=db)
 
 
-async def _create_user(
-    session,
-    *,
-    email: str = "user@example.com",
-    is_active: bool = True,
-    password_hash: str = "hashed",
-) -> User:
-    user = User(
-        email=email,
-        is_active=is_active,
-        password_hash=password_hash,
-    )
-    session.add(user)
-    await session.flush()
-    await session.refresh(user)
-    return user
+async def test_get_user_by_email_returns_user(user_repo, db):
+    user = User(email="user@example.com", password_hash="hash")
+    db.add(user)
+    await db.flush()
+    await db.refresh(user)
+
+    found = await user_repo.get_user_by_email(email="user@example.com")
+
+    assert found is not None
+    assert found.id == user.id
+    assert found.email == "user@example.com"
 
 
-# ==== get_user_by_email ====
+async def test_get_user_by_email_returns_none_for_inactive(user_repo, db):
+    user = User(email="user@example.com", password_hash="hash", is_active=False)
+    db.add(user)
+    await db.flush()
+
+    found = await user_repo.get_user_by_email(email="user@example.com")
+
+    assert found is None
 
 
-async def test_get_user_by_email_returns_user_when_exists(user_repo, db):
-    created = await _create_user(db, email="test@example.com", is_active=True)
+async def test_get_active_user_by_id_returns_user(user_repo, db):
+    user = User(email="user@example.com", password_hash="hash", is_active=True)
+    db.add(user)
+    await db.flush()
+    await db.refresh(user)
 
-    result = await user_repo.get_user_by_email("test@example.com")
+    found = await user_repo.get_active_user_by_id(user.id)
 
-    assert result is not None
-    assert result.id == created.id
-    assert result.email == "test@example.com"
-
-
-async def test_get_user_by_email_returns_none_when_not_exists(user_repo):
-    result = await user_repo.get_user_by_email("nope@example.com")
-    assert result is None
+    assert found is not None
+    assert found.id == user.id
 
 
-async def test_get_user_by_email_ignores_inactive_by_default(user_repo, db):
-    await _create_user(db, email="inactive@example.com", is_active=False)
+async def test_get_active_user_by_id_returns_none_for_inactive(user_repo, db):
+    user = User(email="user@example.com", password_hash="hash", is_active=False)
+    db.add(user)
+    await db.flush()
+    await db.refresh(user)
 
-    result = await user_repo.get_user_by_email("inactive@example.com")
+    found = await user_repo.get_active_user_by_id(user.id)
 
-    assert result is None
-
-
-async def test_get_user_by_email_can_search_inactive(user_repo, db):
-    created = await _create_user(db, email="inactive@example.com", is_active=False)
-
-    result = await user_repo.get_user_by_email(
-        "inactive@example.com",
-        is_active=False,
-    )
-
-    assert result is not None
-    assert result.id == created.id
-    assert result.is_active is False
+    assert found is None
 
 
-# ==== add_user ====
-
-
-async def test_add_user_persists_and_returns_user(user_repo: UserRepository, db):
-    user = await user_repo.add(
-        email="john@example.com",
-        password_hash="hashed",
-    )
+async def test_add_creates_user(user_repo, db):
+    user = await user_repo.add(email="user@example.com", password_hash="hash")
 
     assert user.id is not None
-    assert user.email == "john@example.com"
+    assert user.email == "user@example.com"
+    assert user.password_hash == "hash"
 
-    stmt = select(User).where(User.id == user.id)
-    result = await db.execute(stmt)
-    from_db = result.scalars().first()
-    assert from_db is not None
-    assert from_db.email == "john@example.com"
-    assert from_db.is_active is True
+    row = (await db.execute(select(User).where(User.id == user.id))).scalar_one()
+    assert row.email == "user@example.com"
 
 
-async def test_add_user_raises_on_duplicate_active_email(user_repo, db):
-    await _create_user(db, email="dup@example.com", is_active=True)
+async def test_add_raises_email_already_exists_on_duplicate_email(user_repo, db):
+    existing = User(email="user@example.com", password_hash="hash1")
+    db.add(existing)
+    await db.flush()
 
-    with pytest.raises(RepositoryError):
-        await user_repo.add(
-            email="dup@example.com",
-            password_hash="hashed2",
-        )
-
-
-async def test_add_user_allows_same_email_for_inactive(user_repo, db):
-    await _create_user(db, email="same@example.com", is_active=False)
-
-    user = await user_repo.add(
-        email="same@example.com",
-        password_hash="hashed",
-    )
-
-    assert user.email == "same@example.com"
-    assert user.is_active is True
+    with pytest.raises(EmailAlreadyExists):
+        await user_repo.add(email="user@example.com", password_hash="hash2")
 
 
-# ==== delete_user ====
+async def test_delete_user_marks_user_inactive(user_repo, db):
+    user = User(email="user@example.com", password_hash="hash", is_active=True)
+    db.add(user)
+    await db.flush()
+    await db.refresh(user)
+
+    await user_repo.delete_user(user_id=user.id)
+
+    assert user.is_active is False
 
 
-async def test_delete_user_sets_is_active_false(user_repo, db):
-    user = await _create_user(db, email="del@example.com", is_active=True)
-
-    await user_repo.delete_user(user.id)
-
-    stmt = select(User).where(User.id == user.id)
-    result = await db.execute(stmt)
-    from_db = result.scalars().first()
-
-    assert from_db is not None
-    assert from_db.is_active is False
+async def test_delete_user_raises_if_user_not_exists(user_repo):
+    with pytest.raises(UserNotExists):
+        await user_repo.delete_user(user_id=9999)
 
 
-async def test_delete_user_is_idempotent_for_inactive(user_repo, db):
-    user = await _create_user(db, email="inactive_del@example.com")
+async def test_set_email_updates_email(user_repo, db):
+    user = User(email="old@example.com", password_hash="hash")
+    db.add(user)
+    await db.flush()
+    await db.refresh(user)
 
-    await user_repo.delete_user(user.id)
+    await user_repo.set_email(user, "new@example.com")
+    await db.refresh(user)
 
-    stmt = select(User).where(User.id == user.id)
-    result = await db.execute(stmt)
-    from_db = result.scalars().first()
-
-    assert from_db is not None
-    assert from_db.is_active is False
+    assert user.email == "new@example.com"
 
 
-async def test_delete_user_does_not_affect_other_users(user_repo, db):
-    user1 = await _create_user(db, email="u1@example.com", is_active=True)
-    user2 = await _create_user(db, email="u2@example.com", is_active=True)
+async def test_set_email_raises_email_already_exists_on_conflict(user_repo, db):
+    user1 = User(email="first@example.com", password_hash="hash1")
+    user2 = User(email="second@example.com", password_hash="hash2")
+    db.add_all([user1, user2])
+    await db.flush()
+    await db.refresh(user2)
 
-    await user_repo.delete_user(user1.id)
+    with pytest.raises(EmailAlreadyExists):
+        await user_repo.set_email(user2, "first@example.com")
 
-    stmt = select(User).where(User.id == user2.id)
-    result = await db.execute(stmt)
-    other = result.scalars().first()
 
-    assert other is not None
-    assert other.is_active is True
+async def test_set_password_hash_updates_hash(user_repo, db):
+    user = User(email="user@example.com", password_hash="old-hash")
+    db.add(user)
+    await db.flush()
+    await db.refresh(user)
+
+    await user_repo.set_password_hash(user, "new-hash")
+
+    assert user.password_hash == "new-hash"

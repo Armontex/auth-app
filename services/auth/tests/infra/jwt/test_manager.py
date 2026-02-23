@@ -1,21 +1,20 @@
-import pytest
 import jwt
-from unittest.mock import AsyncMock
-
+import pytest
 from datetime import datetime, timedelta, UTC
+from unittest.mock import AsyncMock, Mock
 
 from services.auth.infra.jwt.manager import JWTManager, TokenPayload
-from services.auth.infra.jwt.exc import VerifyError
-from services.auth.infra.jwt.ports import ITokenRepository
+from services.auth.app.exc import TokenVerifyError
 
 
-SECRET_KEY = "test-secret"
+SECRET_KEY = "test-secret-key"
 
 
 @pytest.fixture
 def token_repo_mock():
-    repo = AsyncMock(spec=ITokenRepository)
-    repo.is_revoked.return_value = False
+    repo = Mock()
+    repo.is_revoked = AsyncMock(return_value=False)
+    repo.revoke_token = AsyncMock()
     return repo
 
 
@@ -24,59 +23,83 @@ def jwt_manager(token_repo_mock):
     return JWTManager(token_repo=token_repo_mock, secret_key=SECRET_KEY)
 
 
-async def test_issue_access_and_verify_success(jwt_manager, token_repo_mock):
+def test_issue_access_creates_valid_token(jwt_manager):
     token = jwt_manager.issue_access(user_id=123)
+
+    assert isinstance(token, str)
+
+    decoded = jwt.decode(token, SECRET_KEY, algorithms=[JWTManager.ALGORITHM])
+    assert decoded["sub"] == "123"
+    assert "jti" in decoded
+    assert "iat" in decoded
+    assert "exp" in decoded
+    assert decoded["exp"] > decoded["iat"]
+
+
+async def test_verify_returns_token_payload(jwt_manager, token_repo_mock):
+    token = jwt_manager.issue_access(user_id=42)
 
     payload = await jwt_manager.verify(token)
 
     assert isinstance(payload, TokenPayload)
-    assert payload.sub == "123"
-    assert isinstance(payload.jti, str)
+    assert payload.sub == "42"
     token_repo_mock.is_revoked.assert_awaited_once_with(payload.jti)
 
 
-async def test_verify_invalid_token(jwt_manager):
-    with pytest.raises(VerifyError) as exc:
-        await jwt_manager.verify("not-a-jwt-token")
+async def test_verify_raises_on_invalid_signature(jwt_manager, token_repo_mock):
+    token = jwt_manager.issue_access(user_id=1)
+    bad_token = token[:-1] + ("a" if token[-1] != "a" else "b")
 
-    assert "Invalid or expired token" in str(exc.value)
+    with pytest.raises(TokenVerifyError) as exc_info:
+        await jwt_manager.verify(bad_token)
+
+    assert "Invalid or expired token" in str(exc_info.value)
+    token_repo_mock.is_revoked.assert_not_awaited()
 
 
-async def test_verify_expired_token(jwt_manager):
+async def test_verify_raises_on_revoked_token(jwt_manager, token_repo_mock):
+    token = jwt_manager.issue_access(user_id=1)
+
+    decoded = jwt.decode(token, SECRET_KEY, algorithms=[JWTManager.ALGORITHM])
+    jti = decoded["jti"]
+
+    token_repo_mock.is_revoked.return_value = True
+
+    with pytest.raises(TokenVerifyError) as exc_info:
+        await jwt_manager.verify(token)
+
+    assert "Revoked token" in str(exc_info.value)
+    token_repo_mock.is_revoked.assert_awaited_once_with(jti)
+
+
+async def test_revoke_calls_repo_with_jti_and_exp(jwt_manager, token_repo_mock):
+    token = jwt_manager.issue_access(user_id=7)
+
+    await jwt_manager.revoke(token)
+
+    decoded = jwt.decode(token, SECRET_KEY, algorithms=[JWTManager.ALGORITHM])
+    jti = decoded["jti"]
+    exp = decoded["exp"]
+
+    token_repo_mock.revoke_token.assert_awaited_once_with(jti, exp)
+
+
+async def test_verify_raises_on_expired_token(token_repo_mock):
+    manager = JWTManager(token_repo=token_repo_mock, secret_key=SECRET_KEY)
+
     now = datetime.now(UTC)
     exp = now - timedelta(minutes=1)
 
     payload = {
-        "sub": 1,
-        "jti": "some-jti",
+        "sub": "1",
+        "jti": "expired-jti",
         "iat": now.timestamp(),
         "exp": exp.timestamp(),
     }
     token = jwt.encode(payload, key=SECRET_KEY, algorithm=JWTManager.ALGORITHM)
 
-    with pytest.raises(VerifyError) as exc:
-        await jwt_manager.verify(token)
+    with pytest.raises(TokenVerifyError) as exc_info:
+        await manager.verify(token)
 
-    assert "Invalid or expired token" in str(exc.value)
-
-
-async def test_verify_revoked_token(jwt_manager, token_repo_mock):
-    token = jwt_manager.issue_access(user_id=1)
-
-    token_repo_mock.is_revoked.return_value = True
-
-    with pytest.raises(VerifyError) as exc:
-        await jwt_manager.verify(token)
-
-    assert "Revoked token" in str(exc.value)
-
-
-async def test_revoke_calls_repo(jwt_manager, token_repo_mock):
-    token = jwt_manager.issue_access(user_id=1)
-
-    await jwt_manager.revoke(token)
-
-    token_repo_mock.revoke_token.assert_awaited_once()
-    (jti, exp), _ = token_repo_mock.revoke_token.await_args
-    assert isinstance(jti, str)
-    assert isinstance(exp, float)
+    assert "Invalid or expired token" in str(exc_info.value)
+    token_repo_mock.is_revoked.assert_not_awaited()

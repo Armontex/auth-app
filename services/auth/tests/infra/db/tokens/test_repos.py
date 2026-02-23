@@ -1,7 +1,25 @@
+import pytest
 import time
 import uuid
+from redis_om import get_redis_connection
 from services.auth.infra.db.tokens.repos import TokenRepositoryRedis
 from services.auth.infra.db.tokens.models import RevokedToken
+
+
+@pytest.fixture(autouse=True)
+def clean_redis(redis_url):
+    conn = get_redis_connection(url=redis_url)
+    conn.ping()
+    for key in conn.keys("blacklist:*"):
+        conn.delete(key)
+    yield
+    for key in conn.keys("blacklist:*"):
+        conn.delete(key)
+
+
+@pytest.fixture
+def token_repo(redis_url) -> TokenRepositoryRedis:
+    return TokenRepositoryRedis(redis_url)
 
 
 def _now_ts() -> float:

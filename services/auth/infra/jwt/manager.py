@@ -7,6 +7,7 @@ from .ports import ITokenRepository
 
 from services.auth.app.exc import TokenVerifyError
 
+
 @dataclass(frozen=True)
 class TokenPayload:
     sub: str
@@ -15,7 +16,6 @@ class TokenPayload:
     exp: float
 
 
-# TODO: Добавить refresh_token.
 class JWTManager:
     ALGORITHM = "HS256"
     ACCESS_EXPIRES_MINUTES = 60 * 24  # 1 день
