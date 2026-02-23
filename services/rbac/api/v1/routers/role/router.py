@@ -3,7 +3,7 @@ from typing import Annotated
 
 from common.ports import IUser
 from api.v1.deps import RequirePermission
-from api.v1.schemas import UserNotExistsResponse
+from api.v1.schemas import UserNotExistsResponse, TokenVerifyErrorResponse
 
 from services.auth.app.exc import UserNotExists
 from services.rbac.app.exc import RoleNotFound
@@ -28,9 +28,18 @@ router = APIRouter(prefix="/role", tags=["role"])
 
 @router.get(
     path="/me",
+    tags=["me"],
     status_code=status.HTTP_200_OK,
     responses={
         200: {"description": "Успешная доставка."},
+        401: {
+            "description": "Токен отсутствует / невалиден / истёк",
+            "content": {
+                "application/json": {
+                    "schema": TokenVerifyErrorResponse.model_json_schema(),
+                },
+            },
+        },
         403: {"description": "Недостаточно прав."},
     },
     response_model=ReadRolesResponse,
@@ -53,6 +62,14 @@ async def read_me_roles(
                 "application/json": {
                     "schema": UserNotExistsResponse.model_json_schema()
                 }
+            },
+        },
+        401: {
+            "description": "Токен отсутствует / невалиден / истёк",
+            "content": {
+                "application/json": {
+                    "schema": TokenVerifyErrorResponse.model_json_schema(),
+                },
             },
         },
         403: {"description": "Недостаточно прав."},
@@ -81,6 +98,14 @@ async def read_roles(
             "description": "Некорректные данные.",
             "content": {
                 "application/json": {"example": {"detail": "User not exists."}}
+            },
+        },
+        401: {
+            "description": "Токен отсутствует / невалиден / истёк",
+            "content": {
+                "application/json": {
+                    "schema": TokenVerifyErrorResponse.model_json_schema(),
+                },
             },
         },
         403: {"description": "Недостаточно прав."},

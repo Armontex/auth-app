@@ -7,6 +7,8 @@ from .usecases import (
     InitRbacUseCase,
     ReadMeRolesUseCase,
     ReadRolesUseCase,
+    ReadMePermissionsUseCase,
+    ReadPermissionsUseCase,
 )
 
 
@@ -25,4 +27,9 @@ class RbacContainer(containers.DeclarativeContainer):
     read_roles_usecase = providers.Factory(
         ReadRolesUseCase, uow=user_uow, read_me_roles=read_me_roles_usecase
     )
+    read_me_perms_usecase = providers.Factory(ReadMePermissionsUseCase)
+    read_perms_usecase = providers.Factory(
+        ReadPermissionsUseCase, uow=user_uow, read_me_perms=read_me_perms_usecase
+    )
+    
     set_role_func = providers.Callable(SetRoleUseCase.set_role)

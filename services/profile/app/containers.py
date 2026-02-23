@@ -1,7 +1,12 @@
 from dependency_injector import containers, providers
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from .usecases import UpdateUseCase, RegisterUseCase
+from .usecases import (
+    UpdateUseCase,
+    RegisterUseCase,
+    ReadMeProfileUseCase,
+    ReadProfileUseCase,
+)
 from .uow import ProfileUoW
 
 
@@ -13,6 +18,10 @@ class ProfileContainer(containers.DeclarativeContainer):
     # ==== UseCases ====
 
     update_usecase = providers.Factory(UpdateUseCase, uow=profile_uow)
+    read_me_prof_usecase = providers.Factory(ReadMeProfileUseCase)
+    read_prof_usecase = providers.Factory(
+        ReadProfileUseCase, uow=profile_uow, read_me_prof=read_me_prof_usecase
+    )
 
     # ==== Factory ====
 

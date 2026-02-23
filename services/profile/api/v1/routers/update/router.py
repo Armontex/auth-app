@@ -1,11 +1,15 @@
 from fastapi import APIRouter, status, Depends, HTTPException
 
+from common.ports import IUser
+from api.v1.schemas import TokenVerifyErrorResponse
+
+from services.profile.app.usecases import UpdateUseCase
+from services.rbac.domain.const import Permission
+
 from .deps import get_update_usecase
 from .mappers import map_profile_to_response, map_request_to_form
 from .schemas import UpdateResponse, UpdateRequest
-from common.ports import IUser
-from services.profile.app.usecases import UpdateUseCase
-from services.rbac.domain.const import Permission
+
 from ...deps import RequirePermission, validate_content_type
 from ...schemas import ValidationErrorResponse
 
@@ -13,11 +17,12 @@ from ...schemas import ValidationErrorResponse
 from services.profile.domain.exc import ValidationError
 
 
-router = APIRouter(prefix="/me", tags=["me"])
+router = APIRouter()
 
 
 @router.put(
-    path="/",
+    path="/me",
+    tags=["me"],
     status_code=status.HTTP_200_OK,
     responses={
         200: {"description": "Данные успешно изменены"},
@@ -29,6 +34,14 @@ router = APIRouter(prefix="/me", tags=["me"])
                 }
             },
         },
+        401: {
+            "description": "Токен отсутствует / невалиден / истёк",
+            "content": {
+                "application/json": {
+                    "schema": TokenVerifyErrorResponse.model_json_schema(),
+                },
+            },
+        },
         403: {
             "description": "Недостаточно прав",
         },
@@ -36,7 +49,7 @@ router = APIRouter(prefix="/me", tags=["me"])
     response_model=UpdateResponse,
     dependencies=[Depends(validate_content_type)],
 )
-async def update(
+async def update_profile(
     body: UpdateRequest,
     user: IUser = Depends(RequirePermission(Permission.PROFILE_ME_UPDATE)),
     usecase: UpdateUseCase = Depends(get_update_usecase),

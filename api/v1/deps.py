@@ -81,6 +81,10 @@ class RequirePermission:
         token: str = Depends(get_bearer_token),
         usecase: AuthorizeUseCase = Depends(get_authorize_usecase),
     ) -> IUser:
+        """
+        Raises:
+            TokenVerifyError: Неверный, истёкший или отозванный токен.
+        """
         user = await usecase.execute(token)
 
         if not self._has_permission(user):
