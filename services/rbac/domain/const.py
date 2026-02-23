@@ -11,9 +11,9 @@ class Permission(str, Enum):
     PROFILE_UPDATE = "profile:update"  # редактировать чужие профили
 
     # ==== ROLES ====
-    ROLE_ME_READ = "role:me:read"  # смотреть свои роли # [x]: usecase | # [ ]: router
-    ROLE_READ = "role:read"  # смотреть роли других # [x]: usecase | # [ ]: router
-    ROLE_SET = "role:set"  # назначать роли другим # [x]: usecase | # [ ]: router
+    ROLE_ME_READ = "role:me:read"  # смотреть свои роли # [x]: usecase | # [x]: router
+    ROLE_READ = "role:read"  # смотреть роли других # [x]: usecase | # [x]: router
+    ROLE_SET = "role:set"  # назначать роли другим # [x]: usecase | # [x]: router
 
     # ==== PERMISSIONS ====
     PERMISSION_ME_READ = (

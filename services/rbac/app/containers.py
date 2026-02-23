@@ -25,4 +25,4 @@ class RbacContainer(containers.DeclarativeContainer):
     read_roles_usecase = providers.Factory(
         ReadRolesUseCase, uow=user_uow, read_me_roles=read_me_roles_usecase
     )
-    set_role_func = SetRoleUseCase.set_role
+    set_role_func = providers.Callable(SetRoleUseCase.set_role)

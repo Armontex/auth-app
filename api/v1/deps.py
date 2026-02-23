@@ -5,6 +5,7 @@ from services.rbac.domain.const import Permission
 from services.auth.app.containers import AuthContainer, AuthorizeUseCase
 from services.register.app.containers import RegisterContainer
 from services.profile.app.containers import ProfileContainer
+from services.rbac.app.containers import RbacContainer
 from common.ports import IUser
 
 
@@ -51,6 +52,10 @@ def get_register_container(request: Request) -> RegisterContainer:
 
 def get_profile_container(request: Request) -> ProfileContainer:
     return request.app.state.profile_container
+
+
+def get_rbac_container(request: Request) -> RbacContainer:
+    return request.app.state.rbac_container
 
 
 def get_authorize_usecase(
