@@ -16,8 +16,8 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    volumes:
-      - pgdata:/var/lib/postgresql/data
+    # volumes:
+    #   - pgdata:/var/lib/postgresql/data
     ports:
       - "5432:5432"
 
@@ -29,8 +29,8 @@ services:
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_ADMIN_PASSWORD}
     ports:
       - "8080:80"
-    volumes:
-      - pgadmin-data:/var/lib/pgadmin
+    # volumes:
+    #   - pgadmin-data:/var/lib/pgadmin
     depends_on:
       - pg
 
@@ -40,10 +40,10 @@ services:
     command: ["redis-server", "--appendonly", "yes"]
     ports:
       - "6379:6379"
-    volumes:
-      - redis-data:/data
+    # volumes:
+    #   - redis-data:/data
 
-volumes:
-  pgdata:
-  pgadmin-data:
-  redis-data:
+# volumes:
+#   pgdata:
+#   pgadmin-data:
+#   redis-data:

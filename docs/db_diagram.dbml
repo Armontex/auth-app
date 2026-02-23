@@ -1,0 +1,47 @@
+Table users {
+  id int [pk, increment]
+  email varchar [not null]
+  password_hash varchar [not null]
+  is_active boolean [not null, default: true]
+  created_at timestamp [not null, default: `now()`]
+
+  Note: 'Ограничение: только один активный пользователь на email (уникальный индекс по (email) при is_active = true)'
+}
+
+Table profiles {
+  id int [pk, increment]
+  user_id int [not null, unique] // 1-1 с users
+  first_name varchar [not null]
+  middle_name varchar
+  last_name varchar [not null]
+}
+
+Table roles {
+  id int [pk, increment]
+  name varchar [not null, unique]
+}
+
+Table permissions {
+  id int [pk, increment]
+  code varchar [not null, unique]
+}
+
+Table user_roles {
+  user_id int [pk, not null]
+  role_id int [pk, not null]
+}
+
+Table role_permissions {
+  role_id int [pk, not null]
+  permission_id int [pk, not null]
+}
+
+// Связи
+
+Ref: profiles.user_id > users.id
+
+Ref: user_roles.user_id > users.id
+Ref: user_roles.role_id > roles.id
+
+Ref: role_permissions.role_id > roles.id
+Ref: role_permissions.permission_id > permissions.id

@@ -54,6 +54,11 @@ async def init_rbac(container: RbacContainer) -> None:
     await usecase.execute()
 
 
+async def init_test_users(container: RegisterContainer) -> None:
+    usecase = container.register_usecase()
+    await usecase.mock_execute()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     engine = create_engine()
@@ -63,6 +68,9 @@ async def lifespan(app: FastAPI):
     await create_tables(engine)
     create_containers(app, session_maker)
     await init_rbac(app.state.rbac_container)
+
+    # test
+    await init_test_users(app.state.register_container)
 
     try:
         yield

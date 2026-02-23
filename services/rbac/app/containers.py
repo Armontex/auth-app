@@ -32,4 +32,4 @@ class RbacContainer(containers.DeclarativeContainer):
         ReadPermissionsUseCase, uow=user_uow, read_me_perms=read_me_perms_usecase
     )
     
-    set_role_func = providers.Callable(SetRoleUseCase.set_role)
+    set_role_func = providers.Object(SetRoleUseCase.set_role)
