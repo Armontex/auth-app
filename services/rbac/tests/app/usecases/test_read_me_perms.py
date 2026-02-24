@@ -1,8 +1,14 @@
 import pytest
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 from services.rbac.app.usecases import ReadMePermissionsUseCase
 from common.ports import IUser, IPermission
+
+
+def make_user(user_id: int) -> IUser:
+    user = MagicMock(spec=IUser)
+    user.id = user_id
+    return user
 
 
 def make_permission(code: str) -> IPermission:
@@ -11,53 +17,30 @@ def make_permission(code: str) -> IPermission:
     return perm
 
 
-def make_role(perms: list[IPermission]):
-    role = MagicMock()
-    role.permissions = perms
-    return role
+async def test_readme_permissions_delegates_to_read_perms():
+    read_perms_uc = AsyncMock()
+    user = make_user(123)
+
+    uc = ReadMePermissionsUseCase(read_perms=read_perms_uc)
+
+    perms = {make_permission("READ"), make_permission("WRITE")}
+    read_perms_uc.execute.return_value = perms
+
+    result = await uc.execute(user)
+
+    read_perms_uc.execute.assert_awaited_once_with(123)
+    assert result == perms
 
 
-def make_user(roles):
-    user = MagicMock(spec=IUser)
-    user.roles = roles
-    return user
+async def test_readme_permissions_returns_empty_set_from_read_perms():
+    read_perms_uc = AsyncMock()
+    user = make_user(1)
 
+    uc = ReadMePermissionsUseCase(read_perms=read_perms_uc)
 
-def test_readme_permissions_returns_union_of_all_role_permissions():
-    p_read = make_permission("READ")
-    p_write = make_permission("WRITE")
-    p_delete = make_permission("DELETE")
+    read_perms_uc.execute.return_value = set()
 
-    role_1 = make_role([p_read, p_write])
-    role_2 = make_role([p_write, p_delete])
+    result = await uc.execute(user)
 
-    user = make_user([role_1, role_2])
-
-    uc = ReadMePermissionsUseCase()
-
-    result = uc.execute(user)
-
-    assert result == {p_read, p_write, p_delete}
-
-
-def test_readme_permissions_handles_user_without_roles():
-    user = make_user([])
-
-    uc = ReadMePermissionsUseCase()
-
-    result = uc.execute(user)
-
-    assert result == set()
-
-
-def test_readme_permissions_handles_roles_without_permissions():
-    role_1 = make_role([])
-    role_2 = make_role([])
-
-    user = make_user([role_1, role_2])
-
-    uc = ReadMePermissionsUseCase()
-
-    result = uc.execute(user)
-
+    read_perms_uc.execute.assert_awaited_once_with(1)
     assert result == set()

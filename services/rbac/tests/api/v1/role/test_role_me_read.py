@@ -8,12 +8,13 @@ from services.rbac.api.v1.routers.role.deps import (
     get_read_me_roles_usecase,
     require_role_me_read,
 )
+from common.ports import IRole
 
 
 @pytest.fixture
 def read_me_roles_usecase_mock() -> AsyncMock:
     uc = AsyncMock(spec=ReadMeRolesUseCase)
-    uc.execute = MagicMock()
+    uc.execute = AsyncMock()
     return uc
 
 
@@ -36,13 +37,16 @@ def _url() -> str:
 
 
 def test_read_me_roles_success(client, read_me_roles_usecase_mock):
-    # эмулируем то, что вернёт usecase в формате response-схемы
-    read_me_roles_usecase_mock.execute.return_value = {"roles": ["admin", "user"]}
+    r1 = MagicMock(spec=IRole)
+    r1.name = "admin"
+    r2 = MagicMock(spec=IRole)
+    r2.name = "user"
+
+    read_me_roles_usecase_mock.execute.return_value = [r1, r2]
 
     response = client.get(_url())
 
     assert response.status_code == status.HTTP_200_OK
-    read_me_roles_usecase_mock.execute.assert_called_once()
+    read_me_roles_usecase_mock.execute.assert_awaited_once()
 
-    body = response.json()
-    assert body["roles"] == ["admin", "user"]
+    assert response.json() == {"roles": ["admin", "user"]}

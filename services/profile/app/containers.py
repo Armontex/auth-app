@@ -18,9 +18,9 @@ class ProfileContainer(containers.DeclarativeContainer):
     # ==== UseCases ====
 
     update_usecase = providers.Factory(UpdateUseCase, uow=profile_uow)
-    read_me_prof_usecase = providers.Factory(ReadMeProfileUseCase)
-    read_prof_usecase = providers.Factory(
-        ReadProfileUseCase, uow=profile_uow, read_me_prof=read_me_prof_usecase
+    read_prof_usecase = providers.Factory(ReadProfileUseCase, uow=profile_uow)
+    read_me_prof_usecase = providers.Factory(
+        ReadMeProfileUseCase, read_profile=read_prof_usecase
     )
 
     # ==== Factory ====

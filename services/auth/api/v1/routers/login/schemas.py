@@ -7,7 +7,7 @@ class LoginRequests(BaseModel):
 
     model_config = ConfigDict(
         json_schema_extra={
-            "example": {"email": "test@examile.com", "password": "some-password"}
+            "example": {"email": "admin@example.com", "password": "qwerty123"}
         }
     )
 

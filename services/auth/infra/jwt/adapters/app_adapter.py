@@ -7,5 +7,5 @@ class JWTManagerAdapter(JWTManager, IJWTManager):
 
     @override
     async def verify(self, token: str) -> int:
-        payload = await super().verify(token)
+        payload = await super()._verify(token)
         return int(payload.sub)

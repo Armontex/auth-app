@@ -13,5 +13,7 @@ def get_update_usecase(
     return container.update_usecase()
 
 
-async def require_profile_me_update() -> IUser:
-    return await RequirePermission(Permission.PROFILE_ME_READ)()
+def require_profile_me_update(
+    user: IUser = Depends(RequirePermission(Permission.PROFILE_ME_UPDATE)),
+) -> IUser:
+    return user

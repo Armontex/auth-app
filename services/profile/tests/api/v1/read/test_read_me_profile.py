@@ -20,7 +20,7 @@ def read_me_usecase_mock() -> MagicMock:
 def override_deps(app_for_tests, read_me_usecase_mock):
     def fake_user_dep():
         user = MagicMock()
-        user.profile = MagicMock()
+        user.id = 123
         return user
 
     app_for_tests.dependency_overrides[require_profile_me_read] = fake_user_dep
@@ -37,7 +37,10 @@ def test_read_me_profile_success(client, read_me_usecase_mock):
     profile.last_name = "Doe"
     profile.middle_name = "Middle"
 
-    read_me_usecase_mock.execute.return_value = profile
+    async def _exec(user):
+        return profile
+
+    read_me_usecase_mock.execute.side_effect = _exec
 
     response = client.get("/api/v1/profile/me")
 

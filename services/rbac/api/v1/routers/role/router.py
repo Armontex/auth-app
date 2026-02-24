@@ -20,9 +20,9 @@ from .deps import (
     get_set_role_usecase,
     require_role_me_read,
     require_role_read,
-    require_role_set
+    require_role_set,
 )
-from .mappers import map_role_name_to_role
+from .mappers import map_role_name_to_role, map_roles_to_response
 
 
 router = APIRouter(prefix="/role", tags=["role"])
@@ -34,6 +34,14 @@ router = APIRouter(prefix="/role", tags=["role"])
     status_code=status.HTTP_200_OK,
     responses={
         200: {"description": "Успешная доставка."},
+        400: {
+            "description": "Такого пользователя не существует",
+            "content": {
+                "application/json": {
+                    "schema": UserNotExistsResponse.model_json_schema()
+                }
+            },
+        },
         401: {
             "description": "Токен отсутствует / невалиден / истёк",
             "content": {
@@ -50,7 +58,12 @@ async def read_me_roles(
     user: IUser = Depends(require_role_me_read),
     usecase: ReadMeRolesUseCase = Depends(get_read_me_roles_usecase),
 ):
-    return usecase.execute(user)
+    try:
+        return map_roles_to_response(await usecase.execute(user))
+    except UserNotExists as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=e.args[0]
+        ) from e
 
 
 @router.get(
@@ -84,7 +97,7 @@ async def read_roles(
     _: IUser = Depends(require_role_read),
 ):
     try:
-        return await usecase.execute(user_id)
+        return map_roles_to_response(await usecase.execute(user_id))
     except UserNotExists as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=e.args[0]

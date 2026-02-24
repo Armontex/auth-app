@@ -27,7 +27,7 @@ class JWTManager:
     def issue_access(self, user_id: int) -> str:
         return self._create_token(user_id, self.ACCESS_EXPIRES_MINUTES)
 
-    async def verify(self, token: str) -> TokenPayload:
+    async def _verify(self, token: str) -> TokenPayload:
         try:
             row_payload = jwt.decode(
                 token, self._secret_key, algorithms=[self.ALGORITHM]
@@ -36,14 +36,14 @@ class JWTManager:
         except jwt.InvalidTokenError as e:
             raise TokenVerifyError("Invalid or expired token") from e
 
-        if await self._token_repo.is_revoked(payload.jti):
+        if self._token_repo.is_revoked(payload.jti):
             raise TokenVerifyError("Revoked token")
 
         return payload
 
     async def revoke(self, token: str) -> None:
-        payload = await self.verify(token)
-        await self._token_repo.revoke_token(payload.jti, payload.exp)
+        payload = await self._verify(token)
+        self._token_repo.revoke_token(payload.jti, payload.exp)
 
     def _create_token(self, user_id: int, expires_minutes: int) -> str:
         now = datetime.now(UTC)

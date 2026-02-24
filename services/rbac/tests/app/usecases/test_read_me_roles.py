@@ -1,8 +1,14 @@
 import pytest
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 from services.rbac.app.usecases import ReadMeRolesUseCase
 from common.ports import IUser, IRole
+
+
+def make_user(user_id: int) -> IUser:
+    user = MagicMock(spec=IUser)
+    user.id = user_id
+    return user
 
 
 def make_role(name: str) -> IRole:
@@ -11,29 +17,33 @@ def make_role(name: str) -> IRole:
     return role
 
 
-def make_user(roles: list[IRole]) -> IUser:
-    user = MagicMock(spec=IUser)
-    user.roles = roles
-    return user
+@pytest.mark.asyncio
+async def test_readme_roles_delegates_to_read_roles():
+    read_roles_uc = AsyncMock()
+    user = make_user(123)
 
+    uc = ReadMeRolesUseCase(read_roles=read_roles_uc)
 
-def test_readme_roles_returns_user_roles():
     r1 = make_role("admin")
     r2 = make_role("manager")
-    user = make_user([r1, r2])
+    read_roles_uc.execute.return_value = [r1, r2]
 
-    uc = ReadMeRolesUseCase()
+    result = await uc.execute(user)
 
-    result = uc.execute(user)
-
+    read_roles_uc.execute.assert_awaited_once_with(123)
     assert result == [r1, r2]
 
 
-def test_readme_roles_handles_user_without_roles():
-    user = make_user([])
+@pytest.mark.asyncio
+async def test_readme_roles_returns_empty_list_from_read_roles():
+    read_roles_uc = AsyncMock()
+    user = make_user(1)
 
-    uc = ReadMeRolesUseCase()
+    uc = ReadMeRolesUseCase(read_roles=read_roles_uc)
 
-    result = uc.execute(user)
+    read_roles_uc.execute.return_value = []
 
+    result = await uc.execute(user)
+
+    read_roles_uc.execute.assert_awaited_once_with(1)
     assert result == []

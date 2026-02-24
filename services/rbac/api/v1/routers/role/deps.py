@@ -28,13 +28,19 @@ def get_set_role_usecase(
     return container.set_role_usecase()
 
 
-async def require_role_me_read() -> IUser:
-    return await RequirePermission(Permission.ROLE_ME_READ)()
+def require_role_me_read(
+    user: IUser = Depends(RequirePermission(Permission.ROLE_ME_READ)),
+) -> IUser:
+    return user
 
 
-async def require_role_read() -> IUser:
-    return await RequirePermission(Permission.ROLE_READ)()
+def require_role_read(
+    user: IUser = Depends(RequirePermission(Permission.ROLE_READ)),
+) -> IUser:
+    return user
 
 
-async def require_role_set() -> IUser:
-    return await RequirePermission(Permission.ROLE_SET)()
+def require_role_set(
+    user: IUser = Depends(RequirePermission(Permission.ROLE_SET)),
+) -> IUser:
+    return user

@@ -9,6 +9,7 @@ from services.rbac.api.v1.routers.role.deps import (
     require_role_read,
 )
 from services.auth.app.exc import UserNotExists
+from common.ports import IRole
 
 
 @pytest.fixture
@@ -37,9 +38,12 @@ def _url(user_id: int) -> str:
 
 
 def test_read_roles_success(client, read_roles_usecase_mock):
-    read_roles_usecase_mock.execute.return_value = {
-        "roles": ["admin", "user"]
-    }
+    r1 = MagicMock(spec=IRole)
+    r1.name = "admin"
+    r2 = MagicMock(spec=IRole)
+    r2.name = "user"
+
+    read_roles_usecase_mock.execute.return_value = [r1, r2]
 
     response = client.get(_url(10))
 
@@ -49,12 +53,7 @@ def test_read_roles_success(client, read_roles_usecase_mock):
 
 
 def test_read_roles_user_not_exists(client, read_roles_usecase_mock):
-    err = UserNotExists("User not exists.")
-
-    async def failing_execute(user_id: int):
-        raise err
-
-    read_roles_usecase_mock.execute.side_effect = failing_execute
+    read_roles_usecase_mock.execute.side_effect = UserNotExists("User not exists.")
 
     response = client.get(_url(999))
 

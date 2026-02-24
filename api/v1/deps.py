@@ -1,35 +1,32 @@
 from fastapi import Header, HTTPException, status, Depends, Request
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from services.rbac.domain.const import Permission
 from services.auth.app.containers import AuthContainer, AuthorizeUseCase
+from services.auth.app.exc import TokenVerifyError
 from services.register.app.containers import RegisterContainer
 from services.profile.app.containers import ProfileContainer
 from services.rbac.app.containers import RbacContainer
 from common.ports import IUser
 
+bearer_scheme = HTTPBearer(auto_error=False)
 
-def get_bearer_token(authorization: str | None = Header(default=None)) -> str:
 
-    if not authorization:
+def get_bearer_token(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+) -> str:
+    if credentials is None or not credentials.scheme or not credentials.credentials:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication credentials were not provided.",
         )
 
-    try:
-        scheme, token = authorization.split(" ", 1)
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired token.",
-        ) from e
-
-    if scheme.lower() != "bearer" or not token:
+    if credentials.scheme.lower() != "bearer":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token.",
         )
 
-    return token
+    return credentials.credentials
 
 
 def validate_content_type(content_type: str = Header(..., alias="Content-Type")):
@@ -79,12 +76,13 @@ class RequirePermission:
         token: str = Depends(get_bearer_token),
         usecase: AuthorizeUseCase = Depends(get_authorize_usecase),
     ) -> IUser:
-        """
-        Raises:
-            TokenVerifyError: Неверный, истёкший или отозванный токен.
-        """
-        user = await usecase.execute(token)
+        try:
+            user = await usecase.execute(token)
 
-        if not self._has_permission(user):
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
-        return user
+            if not self._has_permission(user):
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+            return user
+        except TokenVerifyError as e:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail=e.args[0]
+            ) from e

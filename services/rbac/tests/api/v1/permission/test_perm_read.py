@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 from fastapi import status
 
+from common.ports import IPermission
 from services.rbac.app.usecases import ReadPermissionsUseCase
 from services.rbac.api.v1.routers.permission.deps import (
     get_read_perms_usecase,
@@ -39,22 +40,22 @@ def _url(user_id: int) -> str:
 
 
 def test_read_permissions_success(client, read_perms_usecase_mock):
-    read_perms_usecase_mock.execute.return_value = {"permissions": ["P1", "P2"]}
+    p1 = MagicMock(spec=IPermission)
+    p1.code = "P1"
+    p2 = MagicMock(spec=IPermission)
+    p2.code = "P2"
+
+    read_perms_usecase_mock.execute.return_value = {p1, p2}
 
     response = client.get(_url(10))
 
     assert response.status_code == status.HTTP_200_OK
     read_perms_usecase_mock.execute.assert_awaited_once_with(10)
-    assert response.json() == {"permissions": ["P1", "P2"]}
+    assert set(response.json()["permissions"]) == {"P1", "P2"}
 
 
 def test_read_permissions_user_not_exists(client, read_perms_usecase_mock):
-    err = UserNotExists("User not exists.")
-
-    async def failing_execute(user_id: int):
-        raise err
-
-    read_perms_usecase_mock.execute.side_effect = failing_execute
+    read_perms_usecase_mock.execute.side_effect = UserNotExists("User not exists.")
 
     response = client.get(_url(999))
 

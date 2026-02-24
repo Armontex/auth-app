@@ -26,6 +26,12 @@ router = APIRouter()
     status_code=status.HTTP_200_OK,
     responses={
         200: {"description": "Успешная доставка."},
+        400: {
+            "description": "Некорректные данные.",
+            "content": {
+                "application/json": {"example": {"detail": "Profile not exists."}}
+            },
+        },
         401: {
             "description": "Токен отсутствует / невалиден / истёк",
             "content": {
@@ -42,8 +48,13 @@ async def read_me_profile(
     user: IUser = Depends(require_profile_me_read),
     usecase: ReadMeProfileUseCase = Depends(get_read_me_prof_usecase),
 ):
-    profile = usecase.execute(user)
-    return map_prof_to_response(profile)
+    try:
+        profile = await usecase.execute(user)
+        return map_prof_to_response(profile)
+    except ProfileNotFound as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=e.args[0]
+        ) from e
 
 
 @router.get(

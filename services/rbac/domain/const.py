@@ -16,6 +16,9 @@ class Permission(str, Enum):
     # ==== PERMISSIONS ====
     PERMISSION_ME_READ = "permission:me:read"  # смотреть свои разрешения
     PERMISSION_READ = "permission:read"  # смотреть чужие разрешения
+    
+    # ==== RESOURCES ====
+    RESOURCES = "resources" # доступ к ресурсам
 
 
 class Role(str, Enum):

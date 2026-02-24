@@ -18,9 +18,13 @@ def get_read_perms_usecase(
     return container.read_perms_usecase()
 
 
-async def require_permission_me_read() -> IUser:
-    return await RequirePermission(Permission.PERMISSION_ME_READ)()
+def require_permission_me_read(
+    user: IUser = Depends(RequirePermission(Permission.PERMISSION_ME_READ)),
+) -> IUser:
+    return user
 
 
-async def require_permission_read() -> IUser:
-    return await RequirePermission(Permission.PERMISSION_READ)()
+def require_permission_read(
+    user: IUser = Depends(RequirePermission(Permission.PERMISSION_READ)),
+) -> IUser:
+    return user

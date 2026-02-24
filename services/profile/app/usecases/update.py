@@ -9,9 +9,12 @@ class UpdateUseCase:
         self._uow = uow
 
     async def execute(self, user: IUser, form: UpdateForm) -> IProfile:
-        profile = user.profile
 
         async with self._uow as repos:
+            profile = await repos.profile.get_by_user_id(user.id)
+            
+            if not profile:
+                raise
 
             if form.first_name is not None:
                 await repos.profile.set_first_name(profile, form.first_name.value)
@@ -20,5 +23,4 @@ class UpdateUseCase:
             if form.middle_name is not None:
                 await repos.profile.set_middle_name(profile, form.middle_name.value)
 
-            await repos.profile.refresh(profile)
             return profile

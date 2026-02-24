@@ -7,6 +7,7 @@
   - [Запуск через Docker](#запуск-через-docker)
   - [Сущности и связи в БД](#сущности-и-связи-в-бд)
   - [RBAC](#rbac)
+    - [Тестовые пользователи](#тестовые-пользователи)
   - [Endpoints](#endpoints)
 
 ---
@@ -50,6 +51,14 @@ docker compose up --build
 `scope` - область действия (me или пусто / глобально).
 
 `action` - операция (read, update, set и т.п.)
+
+### Тестовые пользователи
+
+Для демонстрации RBAC при инициализации создаются три пользователя:
+
+- `limited@example.com` — роль `limited_user`
+- `user@example.com` — роль `user`
+- `admin@example.com` — роль `admin`
 
 ---
 

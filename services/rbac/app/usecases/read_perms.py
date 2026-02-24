@@ -2,15 +2,13 @@ from common.ports import IPermission
 
 from services.auth.app.exc import UserNotExists
 
-from .read_me_perms import ReadMePermissionsUseCase
 from ..uow import UserUoW
 
 
 class ReadPermissionsUseCase:
 
-    def __init__(self, uow: UserUoW, read_me_perms: ReadMePermissionsUseCase) -> None:
+    def __init__(self, uow: UserUoW) -> None:
         self._uow = uow
-        self._read_me_perms = read_me_perms
 
     async def execute(self, user_id: int) -> set[IPermission]:
         """
@@ -22,4 +20,4 @@ class ReadPermissionsUseCase:
             if not user:
                 raise UserNotExists
 
-            return self._read_me_perms.execute(user)
+            return {perm for role in user.roles for perm in role.permissions}

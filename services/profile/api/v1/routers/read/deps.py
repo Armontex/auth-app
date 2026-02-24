@@ -22,9 +22,13 @@ def get_read_prof_usecase(
     return container.read_prof_usecase()
 
 
-async def require_profile_me_read() -> IUser:
-    return await RequirePermission(Permission.PROFILE_ME_READ)()
+def require_profile_me_read(
+    user: IUser = Depends(RequirePermission(Permission.PROFILE_ME_READ)),
+) -> IUser:
+    return user
 
 
-async def require_profile_read() -> IUser:
-    return await RequirePermission(Permission.PROFILE_READ)()
+def require_profile_read(
+    user: IUser = Depends(RequirePermission(Permission.PROFILE_READ)),
+) -> IUser:
+    return user

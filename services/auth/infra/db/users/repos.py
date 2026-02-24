@@ -1,5 +1,5 @@
 from typing import override
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from common.base.db import BaseRepository
 from services.auth.app.ports import IUserRepository
@@ -57,8 +57,8 @@ class UserRepository(BaseRepository, IUserRepository):
 
     @override
     async def set_email(self, user: User, new_email: str) -> None:
+        user = await self._session.merge(user)
         user.email = new_email
-
         try:
             await self._session.flush()
         except IntegrityError as e:
@@ -66,4 +66,5 @@ class UserRepository(BaseRepository, IUserRepository):
 
     @override
     async def set_password_hash(self, user: User, new_password_hash: str) -> None:
+        user = await self._session.merge(user)
         user.password_hash = new_password_hash

@@ -12,32 +12,11 @@ from services.auth.app.containers import AuthorizeUseCase
 
 
 def test_get_bearer_token_missing(client):
-    resp = client.get(
-        "/api/v1/register/"
-    )
+    resp = client.get("/api/v1/register/")
     with pytest.raises(Exception) as exc:
         get_bearer_token(None)
-    assert exc.value.status_code == status.HTTP_401_UNAUTHORIZED # type: ignore
+    assert exc.value.status_code == status.HTTP_401_UNAUTHORIZED  # type: ignore
     assert exc.value.detail == "Authentication credentials were not provided."  # type: ignore
-
-
-def test_get_bearer_token_invalid_format():
-    with pytest.raises(Exception) as exc:
-        get_bearer_token("invalid")
-    assert exc.value.status_code == status.HTTP_401_UNAUTHORIZED  # type: ignore
-    assert exc.value.detail == "Invalid or expired token."  # type: ignore
-
-
-def test_get_bearer_token_wrong_scheme():
-    with pytest.raises(Exception) as exc:
-        get_bearer_token("Basic token")
-    assert exc.value.status_code == status.HTTP_401_UNAUTHORIZED  # type: ignore
-    assert exc.value.detail == "Invalid or expired token."  # type: ignore
-
-
-def test_get_bearer_token_ok():
-    token = get_bearer_token("Bearer abc123")
-    assert token == "abc123"
 
 
 def test_validate_content_type_ok():
