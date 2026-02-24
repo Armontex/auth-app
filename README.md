@@ -60,6 +60,8 @@ docker compose up --build
 - `user@example.com` — роль `user`
 - `admin@example.com` — роль `admin`
 
+Все пользователи имею пароль: `qwerty123`
+
 ---
 
 ## Endpoints
@@ -80,3 +82,4 @@ docker compose up --build
 | POST   | /api/v1/rbac/role            | Protected | Назначить роль пользователю                  | role:set            | 204           | 400, 401, 403, 422 |
 | GET    | /api/v1/rbac/permission/me   | Protected | Получить свои permissions                    | permission:me:read  | 200           | 401, 403           |
 | GET    | /api/v1/rbac/permission      | Protected | Получить permissions пользователя по user_id | permission:read     | 200           | 400, 401, 403, 422 |
+| GET    | /api/v1/resources            | Protected | Получить ресурсы                             | resources           | 200           | 401, 403           |
